@@ -1,0 +1,13 @@
+version: "2.2"
+
+services:
+    worker:
+        build: "."
+        restart: "unless-stopped"
+        environment:
+          - TWITTER_KEY
+          - TWITTER_SECRET
+          - URLSCAN_KEY
+    redis:
+        image: "redis:alpine"
+        restart: "unless-stopped"
