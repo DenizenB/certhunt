@@ -47,8 +47,9 @@ class Job:
         raise NotImplemented()
 
 class UrlscanJob(Job):
-    def __init__(self, query):
+    def __init__(self, query, tags=[]):
         super().__init__(query)
+        self.tags = tags
         self.urlscan = UrlscanHelper()
 
     def filter(self, tweet):
@@ -68,7 +69,7 @@ class UrlscanJob(Job):
                 continue
 
             logging.info("Submitting urlscan job: " + url.url)
-            self.urlscan.submit(url.url)
+            self.urlscan.submit(url.url, self.tags)
             cache.set(cache_key, b"", ex=24*3600)
 
 
@@ -76,8 +77,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(funcName)s %(levelname)s %(message)s")
 
     jobs = [
-        UrlscanJob("#phishing"),
-        UrlscanJob("#gootloader"),
+        UrlscanJob("#phishing", ["phishing"]),
+        UrlscanJob("#gootloader", ["gootloader"]),
     ]
 
     for job in jobs:
