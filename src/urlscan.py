@@ -1,3 +1,4 @@
+import logging
 import requests
 from os import environ as env
 

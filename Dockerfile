@@ -17,5 +17,5 @@ RUN crontab crontab \
 COPY src .
 
 # Run cron
-#CMD ["crond", "-f"]
-CMD ["python", "main.py"]
+CMD ["crond", "-f"]
+#CMD ["python", "main.py"]

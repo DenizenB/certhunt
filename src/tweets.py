@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 from os import environ as env
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -10,11 +11,17 @@ from indicator import *
 
 @dataclass
 class Tweet:
-    id: int
+    id: str
     author: str
     created_at: datetime
     text: str
-    indicators: dict
+    indicators: list[Indicator]
+
+    def get_indicators(self, indicator_type):
+        return [indicator for indicator in self.indicators if type(indicator) == indicator_type]
+
+    def has_indicator(self, indicator_type):
+        return any([type(indicator) == indicator_type for indicator in self.indicators])
 
 class TweetTranslator:
     def translate(self, tweet, indicators):
@@ -22,13 +29,14 @@ class TweetTranslator:
 
 class TweetToDict(TweetTranslator):
     def translate(self, tweet, indicators):
+        # Group indicators by type
         indicators_by_type = defaultdict(list)
         for indicator in indicators:
             key = type(indicator).__name__
             indicators_by_type[key].append(str(indicator))
 
         return {
-            'id': tweet.id,
+            'id': tweet.id_str,
             'author': tweet.user._json['screen_name'],
             'created_at': tweet.created_at.isoformat(" ", "seconds"),
             'text': tweet.full_text,
@@ -43,7 +51,7 @@ class TweetToJson(TweetToDict):
 class TweetToClass(TweetTranslator):
     def translate(self, tweet, indicators):
         return Tweet(
-            id=tweet.id,
+            id=tweet.id_str,
             author=tweet.user._json['screen_name'],
             created_at=tweet.created_at,
             text=tweet.full_text,
@@ -60,6 +68,7 @@ class TwitterHelper:
         self.api = API(auth)
 
     def search(self, *, query, limit=10, retweets=False, **search_args):
+        logging.info("Search recent tweets: " + query)
         results = 0
 
         cursor = Cursor(self.api.search_tweets, q=query, result_type='recent', tweet_mode='extended', **search_args)
@@ -74,11 +83,15 @@ class TwitterHelper:
             if results >= limit:
                 break
 
+        logging.info(f"Got {results} tweets")
+
 
 if __name__ == "__main__":
     import argparse
     import json
     from sys import argv, stderr, exit
+
+    logging.basicConfig(level=logging.DEBUG, stream=stderr)
 
     parser = argparse.ArgumentParser(description="Retrieve tweets (newest first) and any contained IOCs, output as json", add_help=False)
     parser.add_argument("query", type=str)
