@@ -10,9 +10,9 @@ cache = Redis(host='redis')
 twitter = TwitterHelper()
 
 class Job:
-    def __init__(self, query):
-        self.query = query
-        self.last_id_key = "id:" + query
+    def __init__(self, twitter_query):
+        self.twitter_query = twitter_query
+        self.last_id_key = "id:" + twitter_query
 
     @property
     def last_id(self):
@@ -26,7 +26,7 @@ class Job:
 
     def run(self):
         # Search tweets
-        tweets = list(twitter.search(query=self.query, since_id=self.last_id, limit=100))
+        tweets = list(twitter.search(query=self.twitter_query, since_id=self.last_id, limit=100))
 
         # Process tweets
         for tweet in tweets:
@@ -46,9 +46,9 @@ class Job:
         raise NotImplemented()
 
 class UrlscanJob(Job):
-    def __init__(self, query, tags=[]):
-        super().__init__(query)
-        self.tags = tags
+    def __init__(self, twitter_query, **urlscan_args):
+        super().__init__(twitter_query)
+        self.urlscan_args = urlscan_args
         self.urlscan = UrlscanHelper()
 
     def filter(self, tweet):
@@ -65,7 +65,7 @@ class UrlscanJob(Job):
 
             logging.info("Submitting urlscan job: " + url.url)
             try:
-                self.urlscan.submit(url.url, self.tags)
+                self.urlscan.submit(url.url, **self.urlscan_args)
             except UrlscanError:
                 pass
 

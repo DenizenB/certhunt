@@ -14,12 +14,12 @@ class UrlscanHelper:
             'API-Key': env['URLSCAN_KEY'],
         }
 
-    def submit(self, url, tags=[]):
+    def submit(self, url, **urlscan_args):
         data = {
             'url': url,
             'visibility': "public",
-            'tags': tags
         }
+        data.update(urlscan_args)
 
         r = self.session.post(self.BASE_URL + "/scan", json=data)
         data = r.json()
