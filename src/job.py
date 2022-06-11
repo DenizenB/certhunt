@@ -55,15 +55,14 @@ class UrlscanJob(Job):
         return tweet.has_indicator(Url)
 
     def process(self, tweet):
-        logging.info(f"Processing tweet {tweet.id}")
         urls = tweet.get_indicators(Url)
         for url in urls:
             cache_key = "urlscan:" + url.url
             if cache.exists(cache_key):
-                logging.info("Skipping already scanned: " + url.url)
+                logging.info(f"{self.twitter_query} -> {tweet.id} -> {url.url} -> Already submitted")
                 continue
 
-            logging.info("Submitting urlscan job: " + url.url)
+            logging.info(f"{self.twitter_query} -> {tweet.id} -> {url.url} -> Submitting to urlscan")
             try:
                 self.urlscan.submit(url.url, **self.urlscan_args)
             except UrlscanError:
