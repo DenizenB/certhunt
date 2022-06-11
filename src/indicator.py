@@ -58,7 +58,7 @@ class IocParser:
         parser(Ip,      r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"),
         parser(IpPort,  r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(?P<port>\d{1,5})"),
         parser(Hash,    r"(?i)\b(?P<hash>[0-9a-f]{32}|[0-9a-f]{40}|[0-9a-f]{64})\b"),
-        parser(Url,     r"(?P<url>https?://(?!t\.co/)[^\s]+)")
+        parser(Url,     r"(?P<url>https?://(?!t\.co/)[^\s\"]+)")
     ]
 
     def fang_text(self, text):

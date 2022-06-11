@@ -2,6 +2,9 @@ import logging
 import requests
 from os import environ as env
 
+class UrlscanError(Exception):
+    pass
+
 class UrlscanHelper:
     BASE_URL = "https://urlscan.io/api/v1"
 
@@ -19,6 +22,10 @@ class UrlscanHelper:
         }
 
         r = self.session.post(self.BASE_URL + "/scan", json=data)
-        r.raise_for_status()
+        data = r.json()
 
-        return r.json()
+        if r.status_code != 200:
+            logging.error(f"HTTP {r.status_code}: {data['message']}")
+            raise UrlscanError(data['message'])
+
+        return data

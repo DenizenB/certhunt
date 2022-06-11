@@ -68,7 +68,6 @@ class TwitterHelper:
         self.api = API(auth)
 
     def search(self, *, query, limit=10, retweets=False, **search_args):
-        logging.info("Search recent tweets: " + query)
         results = 0
 
         cursor = Cursor(self.api.search_tweets, q=query, result_type='recent', tweet_mode='extended', **search_args)
@@ -83,7 +82,7 @@ class TwitterHelper:
             if results >= limit:
                 break
 
-        logging.info(f"Got {results} tweets")
+        logging.info(f"{query} -> {results} tweets")
 
 
 if __name__ == "__main__":
