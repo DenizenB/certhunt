@@ -58,10 +58,6 @@ class UrlscanJob(Job):
         logging.info(f"Processing tweet {tweet.id}")
         urls = tweet.get_indicators(Url)
         for url in urls:
-            if not url.path.strip("/"):
-                logging.info("Skipping no path: " + url.url)
-                continue
-
             cache_key = "urlscan:" + url.url
             if cache.exists(cache_key):
                 logging.info("Skipping already scanned: " + url.url)
