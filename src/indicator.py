@@ -54,6 +54,8 @@ def parser(cls, regex):
 
 class IocParser:
     defang_pattern = re.compile(r"[\[\]]")
+    scheme_pattern = re.compile(r"[htpx]*(s?)://")
+
     parsers = [
         parser(Ip,      r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"),
         parser(IpPort,  r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(?P<port>\d{1,5})"),
@@ -63,7 +65,7 @@ class IocParser:
 
     def fang_text(self, text):
         fanged_text = self.defang_pattern.sub("", text)
-        fanged_text = fanged_text.replace("hxxp", "http")
+        fanged_text = self.scheme_pattern.sub(r"http\1://", fanged_text)
         return fanged_text
 
     def parse_indicators(self, text):
