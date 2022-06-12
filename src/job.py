@@ -1,5 +1,7 @@
 import logging
+import re
 from redis import Redis
+from datetime import timedelta
 
 from urlscan import UrlscanHelper, UrlscanError
 from tweets import Tweet, TwitterHelper
@@ -10,8 +12,9 @@ cache = Redis(host='redis')
 twitter = TwitterHelper()
 
 class Job:
-    def __init__(self, twitter_query: str):
+    def __init__(self, twitter_query: str, retweets = False):
         self.twitter_query = twitter_query
+        self.retweets = retweets
         self.last_id_key = "id:" + twitter_query
 
     @property
@@ -26,7 +29,7 @@ class Job:
 
     def run(self):
         # Search tweets
-        tweets = list(twitter.search(query=self.twitter_query, since_id=self.last_id, limit=100))
+        tweets = list(twitter.search(query=self.twitter_query, retweets=self.retweets, since_id=self.last_id, limit=100))
 
         # Process tweets
         for tweet in tweets:
@@ -46,18 +49,23 @@ class Job:
         raise NotImplemented()
 
 class UrlscanJob(Job):
-    def __init__(self, twitter_query: str, tags: list[str] = [], **urlscan_args):
-        super().__init__(twitter_query)
+    def __init__(self, twitter_query: str, retweets = False, backoff = timedelta(days=3), tags: list[str] = [], referer: str = ""):
+        super().__init__(twitter_query, retweets)
         self.urlscan = UrlscanHelper()
 
+        self.backoff = backoff
         self.tags = tags
-        self.urlscan_args = urlscan_args
+        self.referer = referer
 
     def filter(self, tweet):
-        return tweet.has_indicator(Url)
+        return tweet.has_indicator(Url) or re.search(r"(?<!t\.co)/(?!t\.co)(?!/t\.co)", tweet.text)
 
     def process(self, tweet: Tweet):
         urls = tweet.get_indicators(Url)
+
+        if not urls:
+            logging.warning(f"May have failed to parse defanged URL in tweet {tweet.id}:\n\t" + tweet.text.replace("\n", "\n\t"))
+
         for url in urls:
             cache_key = "urlscan:" + url.url
             if cache.exists(cache_key):
@@ -70,9 +78,9 @@ class UrlscanJob(Job):
             tags = self.tags + [f"@{tweet.author}"]
 
             try:
-                self.urlscan.submit(url.url, tags=tags, **self.urlscan_args)
+                self.urlscan.submit(url.url, tags=tags, referer=self.referer)
             except UrlscanError as e:
                 logging.error(f"Failed to scan: {e}")
 
-            # Mark url as scanned for 24h to avoid submitting duplicates
-            cache.set(cache_key, b"", ex=24*3600)
+            # Remember scan to avoid submitting duplicates until 'backoff' period has passed
+            cache.set(cache_key, b"", ex=self.backoff)
