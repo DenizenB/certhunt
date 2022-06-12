@@ -2,7 +2,7 @@ import logging
 from redis import Redis
 
 from urlscan import UrlscanHelper, UrlscanError
-from tweets import TwitterHelper
+from tweets import Tweet, TwitterHelper
 from indicator import Url
 
 
@@ -10,7 +10,7 @@ cache = Redis(host='redis')
 twitter = TwitterHelper()
 
 class Job:
-    def __init__(self, twitter_query):
+    def __init__(self, twitter_query: str):
         self.twitter_query = twitter_query
         self.last_id_key = "id:" + twitter_query
 
@@ -39,22 +39,24 @@ class Job:
         if tweets:
             self.last_id = tweets[0].id
 
-    def filter(self, tweet):
+    def filter(self, tweet: Tweet):
         return True
 
-    def process(self, tweet):
+    def process(self, tweet: Tweet):
         raise NotImplemented()
 
 class UrlscanJob(Job):
-    def __init__(self, twitter_query, **urlscan_args):
+    def __init__(self, twitter_query: str, tags: list[str], **urlscan_args):
         super().__init__(twitter_query)
-        self.urlscan_args = urlscan_args
         self.urlscan = UrlscanHelper()
+
+        self.tags = tags
+        self.urlscan_args = urlscan_args
 
     def filter(self, tweet):
         return tweet.has_indicator(Url)
 
-    def process(self, tweet):
+    def process(self, tweet: Tweet):
         urls = tweet.get_indicators(Url)
         for url in urls:
             cache_key = "urlscan:" + url.url
@@ -63,10 +65,14 @@ class UrlscanJob(Job):
                 continue
 
             logging.info(f"{self.twitter_query} -> {tweet.id} -> {url.url} -> Submitting to urlscan")
-            try:
-                self.urlscan.submit(url.url, **self.urlscan_args)
-            except UrlscanError:
-                pass
 
-            # Mark url as scanned
+            # Append author to tags
+            tags = self.tags + [f"@{tweet.author}"]
+
+            try:
+                self.urlscan.submit(url.url, tags=tags, **self.urlscan_args)
+            except UrlscanError as e:
+                logging.error(f"Failed to scan: {e}")
+
+            # Mark url as scanned for 24h to avoid submitting duplicates
             cache.set(cache_key, b"", ex=24*3600)

@@ -14,10 +14,11 @@ class UrlscanHelper:
             'API-Key': env['URLSCAN_KEY'],
         }
 
-    def submit(self, url, **urlscan_args):
+    def submit(self, url: str, tags: list[str], **urlscan_args):
         data = {
             'url': url,
             'visibility': "public",
+            'tags': tags,
         }
         data.update(urlscan_args)
 
@@ -25,7 +26,6 @@ class UrlscanHelper:
         data = r.json()
 
         if r.status_code != 200:
-            logging.error(f"HTTP {r.status_code}: {data['message']}")
             raise UrlscanError(data['message'])
 
         return data

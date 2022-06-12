@@ -4,6 +4,7 @@ from os import environ as env
 from dataclasses import dataclass, field
 from datetime import datetime
 from collections import defaultdict
+from typing import TypeVar
 
 from tweepy import AppAuthHandler, API, Cursor
 
@@ -17,14 +18,14 @@ class Tweet:
     text: str
     indicators: list[Indicator]
 
-    def get_indicators(self, indicator_type):
+    def get_indicators(self, indicator_type: TypeVar):
         return [indicator for indicator in self.indicators if type(indicator) == indicator_type]
 
-    def has_indicator(self, indicator_type):
+    def has_indicator(self, indicator_type: TypeVar):
         return any([type(indicator) == indicator_type for indicator in self.indicators])
 
 class TweetTranslator:
-    def translate(self, tweet, indicators):
+    def translate(self, tweet: Tweet, indicators: list[Indicator]):
         raise NotImplemented()
 
 class TweetToDict(TweetTranslator):
@@ -60,14 +61,14 @@ class TweetToClass(TweetTranslator):
 
 
 class TwitterHelper:
-    def __init__(self, translator=TweetToClass()):
+    def __init__(self, translator: TweetTranslator = TweetToClass()):
         self.translator = translator
         self.parser = IocParser()
 
         auth = AppAuthHandler(env['TWITTER_KEY'], env['TWITTER_SECRET'])
         self.api = API(auth)
 
-    def search(self, *, query, limit=10, retweets=False, **search_args):
+    def search(self, *, query, limit=10, retweets=False, **search_args) -> list[Tweet]:
         results = 0
 
         cursor = Cursor(self.api.search_tweets, q=query, result_type='recent', tweet_mode='extended', **search_args)
