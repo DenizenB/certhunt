@@ -68,7 +68,7 @@ class TwitterHelper:
         auth = AppAuthHandler(env['TWITTER_KEY'], env['TWITTER_SECRET'])
         self.api = API(auth)
 
-    def search(self, *, query, limit=10, retweets=False, **search_args) -> list[Tweet]:
+    def search(self, *, query: str, limit = 10, retweets = False, **search_args) -> list[Tweet]:
         results = 0
 
         cursor = Cursor(self.api.search_tweets, q=query, result_type='recent', tweet_mode='extended', **search_args)

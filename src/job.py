@@ -46,7 +46,7 @@ class Job:
         raise NotImplemented()
 
 class UrlscanJob(Job):
-    def __init__(self, twitter_query: str, tags: list[str], **urlscan_args):
+    def __init__(self, twitter_query: str, tags: list[str] = [], **urlscan_args):
         super().__init__(twitter_query)
         self.urlscan = UrlscanHelper()
 

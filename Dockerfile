@@ -18,4 +18,3 @@ COPY src .
 
 # Run cron
 CMD ["crond", "-f"]
-#CMD ["python", "main.py"]
