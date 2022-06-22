@@ -1,13 +1,27 @@
 version: "2.2"
 
 services:
-    worker:
-        build: "."
-        restart: "unless-stopped"
+    tasker:
+        build: tasker
+        restart: unless-stopped
         environment:
           - TWITTER_KEY
           - TWITTER_SECRET
           - URLSCAN_KEY
     redis:
-        image: "redis:alpine"
-        restart: "unless-stopped"
+        image: redis:alpine
+        restart: unless-stopped
+    certstream:
+        build: certstream
+        restart: unless-stopped
+        environment:
+          - POSTGRES_DB
+          - POSTGRES_PASSWORD
+    postgres:
+        build: postgres
+        restart: unless-stopped
+        environment:
+          - POSTGRES_DB
+          - POSTGRES_PASSWORD
+        volumes:
+          - ./postgres/data:/var/lib/postgresql/data

@@ -54,13 +54,13 @@ def parser(cls, regex):
 
 class IocParser:
     defang_characters = re.compile(r"[\[\]]")
-    defanged_scheme = re.compile(r"[htpxX]*(s?)://")
+    defanged_scheme = re.compile(r"[htpxX]*(s?):?//")
 
     parsers = [
         parser(Ip,      r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"),
         parser(IpPort,  r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(?P<port>\d{1,5})"),
         parser(Hash,    r"(?i)\b(?P<hash>[0-9a-f]{32}|[0-9a-f]{40}|[0-9a-f]{64})\b"),
-        parser(Url,     r"(?P<url>https?://(?!t\.co/)[^\s\"]+)"),
+        parser(Url,     r"(?P<url>https?:?//(?!t\.co/)[^\s\"]+)"),
         parser(Url,     r"(?m)(?:^|\s)s?/(?P<url>[^\s\"]+\.[^\s\"]+)"), # formats used by e.g. @illegalFawn, @dubstard
     ]
 
