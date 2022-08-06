@@ -84,13 +84,38 @@ func storeDomains(inputStream <-chan Domain) {
         log.Fatal(err)
     }
 
-    for {
-        domain := <-inputStream
+    defer db.Close()
 
-        _, err := db.Exec("INSERT INTO domains (domain, suffix, seen) VALUES ($1, $2, $3)", domain.Domain, domain.Suffix, domain.Seen)
+    batchSize := 1000
+    var domains [1000]Domain
+
+    for {
+        // Fetch batch of domains
+        for i := 0; i < batchSize; i++ {
+            domains[i] = <-inputStream
+        }
+
+        // Insert batch of domains
+        tx, err := db.Begin()
         if err != nil {
             log.Error(err)
+            continue
         }
+
+        for i := 0; i < batchSize; i++ {
+            _, err := db.Exec("INSERT INTO domains (domain, suffix, seen) VALUES ($1, $2, $3)", domains[i].Domain, domains[i].Suffix, domains[i].Seen)
+            if err != nil {
+                log.Error(err)
+            }
+        }
+
+        err = tx.Commit()
+        if err != nil {
+            log.Error(err)
+            continue
+        }
+
+        log.Info("Batch of", batchSize, "domains inserted")
     }
 }
 

@@ -2,8 +2,9 @@ import logging
 import re
 from redis import Redis
 from datetime import timedelta
+from time import sleep
 
-from urlscan import UrlscanHelper, UrlscanError
+from urlscan import UrlscanHelper, UrlscanError, RateLimitExceeded
 from tweets import Tweet, TwitterHelper
 from indicator import Url
 
@@ -79,6 +80,10 @@ class UrlscanJob(Job):
 
             try:
                 self.urlscan.submit(url.url, tags=tags, referer=self.referer)
+            except RateLimitExceeded as e:
+                logging.warning(f"Rate limit exceeded, retrying in {e.reset_after_seconds} seconds")
+                sleep(e.reset_after_seconds)
+                return self.process(tweet)
             except UrlscanError as e:
                 logging.error(f"Failed to scan: {e}")
 

@@ -22,7 +22,7 @@ class Tweet:
         return [indicator for indicator in self.indicators if type(indicator) == indicator_type]
 
     def has_indicator(self, indicator_type: TypeVar):
-        return any([type(indicator) == indicator_type for indicator in self.indicators])
+        return any(type(indicator) == indicator_type for indicator in self.indicators)
 
 class TweetTranslator:
     def translate(self, tweet: Tweet, indicators: list[Indicator]):
@@ -83,7 +83,7 @@ class TwitterHelper:
             if results >= limit:
                 break
 
-        logging.info(f"{query} -> {results} tweets")
+        logging.debug(f"{query} -> {results} tweets")
 
 
 if __name__ == "__main__":
