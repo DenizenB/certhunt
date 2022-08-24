@@ -79,7 +79,10 @@ class UrlscanJob(Job):
             tags = self.tags + [f"@{tweet.author}"]
 
             try:
-                self.urlscan.submit(url.url, tags=tags, referer=self.referer)
+                result = self.urlscan.submit(url.url, tags=tags, referer=self.referer)
+
+                uuid = result['uuid']
+                self.process_result(uuid)
             except RateLimitExceeded as e:
                 logging.warning(f"Rate limit exceeded, retrying in {e.reset_after_seconds} seconds")
                 sleep(e.reset_after_seconds)
@@ -89,3 +92,6 @@ class UrlscanJob(Job):
 
             # Remember scan to avoid submitting duplicates until 'backoff' period has passed
             cache.set(cache_key, b"", ex=self.backoff)
+
+    def process_result(self, uuid):
+        pass
