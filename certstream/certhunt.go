@@ -3,6 +3,7 @@ package main
 import (
     "os"
     "time"
+    "strings"
 
     logging "github.com/op/go-logging"
 
@@ -10,7 +11,7 @@ import (
     "golang.org/x/net/publicsuffix"
 
     "database/sql"
-    _ "github.com/lib/pq"
+    "github.com/lib/pq"
 
     "github.com/paulbellamy/ratecounter"
 )
@@ -18,13 +19,16 @@ import (
 var log = logging.MustGetLogger("certhunt")
 var logFormatter = logging.MustStringFormatter(`%{color}%{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
 
-type Domain struct {
+type Certificate struct {
+    CommonName string
     Domain string
     Suffix string
+    AllDomains []string
     Seen uint64
+    ValiditySeconds uint64
 }
 
-func streamDomains(outputStream chan<- Domain) {
+func streamCerts(outputStream chan<- Certificate) {
     var lastReport = time.Now()
 
     countSpan := 10 * time.Second
@@ -42,21 +46,45 @@ func streamDomains(outputStream chan<- Domain) {
 
                 certCount.Incr(1)
 
+                seen, _ := jq.Float("data", "seen")
+                notBefore, _ := jq.Float("data", "leaf_cert", "not_before")
+                notAfter, _ := jq.Float("data", "leaf_cert", "not_after")
                 commonName, _ := jq.String("data", "leaf_cert", "subject", "CN")
-                domain, err := publicsuffix.EffectiveTLDPlusOne(commonName)
-                if err != nil  || domain != commonName {
-                    continue
+                allDomains, _ := jq.ArrayOfStrings("data", "leaf_cert", "all_domains")
+
+                var domain string
+                var suffix string
+                var err error
+
+                if commonName == "" {
+                    domain = ""
+                    suffix = ""
+                } else {
+                    if domain, err = publicsuffix.EffectiveTLDPlusOne(commonName); err != nil {
+                        log.Warning(err)
+                        domain = ""
+                    }
+
+                    suffix, _ = publicsuffix.PublicSuffix(domain)
                 }
 
-                domainCount.Incr(1)
+                for i := 0; i < len(allDomains); i++ {
+                    prefix := strings.TrimSuffix(allDomains[i], commonName)
+                    prefix = strings.TrimSuffix(prefix, domain)
+                    prefix = strings.TrimSuffix(prefix, ".")
+                    allDomains[i] = prefix
+                    // TODO remove empty string from array
+                }
 
-                suffix, _ := publicsuffix.PublicSuffix(domain)
-                seen, _ := jq.Float("data", "seen")
+                domainCount.Incr(int64(len(allDomains)))
 
-                result := Domain {
+                result := Certificate {
+                    CommonName: commonName,
                     Domain: domain,
                     Suffix: suffix,
+                    AllDomains: allDomains,
                     Seen: uint64(seen),
+                    ValiditySeconds: uint64(notAfter - notBefore),
                 }
 
                 outputStream<- result
@@ -74,7 +102,7 @@ func streamDomains(outputStream chan<- Domain) {
     }
 }
 
-func storeDomains(inputStream <-chan Domain) {
+func storeCerts(inputStream <-chan Certificate) {
     database := os.Getenv("POSTGRES_DB")
     password := os.Getenv("POSTGRES_PASSWORD")
     connStr := "host=postgres user=postgres sslmode=disable password=" + password + " dbname=" + database
@@ -87,15 +115,18 @@ func storeDomains(inputStream <-chan Domain) {
     defer db.Close()
 
     batchSize := 1000
-    var domains [1000]Domain
+    var certs [1000]Certificate
+    var count int
 
     for {
-        // Fetch batch of domains
+        // Fetch batch of certs
         for i := 0; i < batchSize; i++ {
-            domains[i] = <-inputStream
+            certs[i] = <-inputStream
         }
 
-        // Insert batch of domains
+        log.Info("Inserting batch of", batchSize, "certs")
+
+        // Insert batch of certs
         tx, err := db.Begin()
         if err != nil {
             log.Error(err)
@@ -103,7 +134,8 @@ func storeDomains(inputStream <-chan Domain) {
         }
 
         for i := 0; i < batchSize; i++ {
-            _, err := db.Exec("INSERT INTO domains (domain, suffix, seen) VALUES ($1, $2, $3)", domains[i].Domain, domains[i].Suffix, domains[i].Seen)
+            _, err := tx.Exec("INSERT INTO certs (common_name, domain, suffix, all_domains, seen, validity_seconds) VALUES ($1, $2, $3, $4, $5, $6)",
+                certs[i].CommonName, certs[i].Domain, certs[i].Suffix, pq.Array(certs[i].AllDomains), certs[i].Seen, certs[i].ValiditySeconds)
             if err != nil {
                 log.Error(err)
             }
@@ -115,7 +147,23 @@ func storeDomains(inputStream <-chan Domain) {
             continue
         }
 
-        log.Info("Batch of", batchSize, "domains inserted")
+        log.Info("Batch inserted")
+
+        // Check table size
+        row := db.QueryRow("SELECT COUNT(*) FROM certs")
+        err = row.Scan(&count)
+        if err != nil {
+            log.Error(err)
+            continue
+        }
+
+        if count > 2500000 {
+            log.Info(count, "rows in table, trimming oldest 10k rows")
+            _, err = db.Exec("DELETE FROM certs WHERE ctid IN (SELECT ctid FROM certs ORDER BY seen LIMIT 10000)")
+            if err != nil {
+                log.Error(err)
+            }
+        }
     }
 }
 
@@ -123,7 +171,7 @@ func main() {
     logging.SetFormatter(logFormatter)
 
     log.Info("Initializing")
-    domains := make(chan Domain)
-    go streamDomains(domains)
-    storeDomains(domains)
+    certs := make(chan Certificate, 2000)
+    go streamCerts(certs)
+    storeCerts(certs)
 }
