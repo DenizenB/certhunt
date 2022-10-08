@@ -8,34 +8,21 @@ import (
     logging "github.com/op/go-logging"
 
     "github.com/CaliDog/certstream-go"
-    "golang.org/x/net/publicsuffix"
-
-    "database/sql"
-    "github.com/lib/pq"
 
     "github.com/paulbellamy/ratecounter"
 )
 
 var log = logging.MustGetLogger("certhunt")
-var logFormatter = logging.MustStringFormatter(`%{color}%{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
 
-type Certificate struct {
-    CommonName string
-    Domain string
-    Suffix string
-    AllDomains []string
-    Seen uint64
-    ValiditySeconds uint64
-}
+func streamCerts(outputStream chan<- DynamicMap) {
+    printInterval := 10 * time.Second
+    var lastPrint = time.Now()
 
-func streamCerts(outputStream chan<- Certificate) {
-    var lastReport = time.Now()
+    averageInterval := printInterval
+    certCounter := ratecounter.NewRateCounter(averageInterval)
 
-    countSpan := 10 * time.Second
-    certCount := ratecounter.NewRateCounter(countSpan)
-    domainCount := ratecounter.NewRateCounter(countSpan)
-
-    certs, errors := certstream.CertStreamEventStream(true)
+    log.Debug("Connecting to Certstream")
+    certs, errors := certstream.CertStreamEventStream(false)
     for {
         select {
             case jq := <-certs:
@@ -44,134 +31,79 @@ func streamCerts(outputStream chan<- Certificate) {
                     continue
                 }
 
-                certCount.Incr(1)
+                certCounter.Incr(1)
 
-                seen, _ := jq.Float("data", "seen")
-                notBefore, _ := jq.Float("data", "leaf_cert", "not_before")
-                notAfter, _ := jq.Float("data", "leaf_cert", "not_after")
-                commonName, _ := jq.String("data", "leaf_cert", "subject", "CN")
-                allDomains, _ := jq.ArrayOfStrings("data", "leaf_cert", "all_domains")
-
-                var domain string
-                var suffix string
-                var err error
-
-                if commonName == "" {
-                    domain = ""
-                    suffix = ""
-                } else {
-                    if domain, err = publicsuffix.EffectiveTLDPlusOne(commonName); err != nil {
-                        log.Warning(err)
-                        domain = ""
-                    }
-
-                    suffix, _ = publicsuffix.PublicSuffix(domain)
-                }
-
-                for i := 0; i < len(allDomains); i++ {
-                    prefix := strings.TrimSuffix(allDomains[i], commonName)
-                    prefix = strings.TrimSuffix(prefix, domain)
-                    prefix = strings.TrimSuffix(prefix, ".")
-                    allDomains[i] = prefix
-                    // TODO remove empty string from array
-                }
-
-                domainCount.Incr(int64(len(allDomains)))
-
-                result := Certificate {
-                    CommonName: commonName,
-                    Domain: domain,
-                    Suffix: suffix,
-                    AllDomains: allDomains,
-                    Seen: uint64(seen),
-                    ValiditySeconds: uint64(notAfter - notBefore),
-                }
-
-                outputStream<- result
+                data, _ := jq.Object("data")
+                outputStream<- DynamicMap(data)
             case err := <-errors:
-                log.Error(err)
+                log.Debug(err)
         }
 
-        if time.Since(lastReport) >= countSpan {
-            certRate := float64(certCount.Rate()) / countSpan.Seconds()
-            domainRate := float64(domainCount.Rate()) / countSpan.Seconds()
+        if time.Since(lastPrint) >= printInterval {
+            certRate := float64(certCounter.Rate()) / averageInterval.Seconds()
 
-            log.Info(certRate, "certs/s", domainRate, "domains/s")
-            lastReport = time.Now()
+            log.Debug(certRate, "certs/s")
+            lastPrint = time.Now()
         }
     }
 }
 
-func storeCerts(inputStream <-chan Certificate) {
-    database := os.Getenv("POSTGRES_DB")
-    password := os.Getenv("POSTGRES_PASSWORD")
-    connStr := "host=postgres user=postgres sslmode=disable password=" + password + " dbname=" + database
-
-    db, err := sql.Open("postgres", connStr)
+func matchCerts(inputStream <-chan DynamicMap) {
+    // Load rules
+    log.Debug("Loading Sigma rules")
+    ruleset, err := LoadRules("./rules")
     if err != nil {
         log.Fatal(err)
     }
 
-    defer db.Close()
-
-    batchSize := 1000
-    var certs [1000]Certificate
-    var count int
-
+    // Match certs
     for {
-        // Fetch batch of certs
-        for i := 0; i < batchSize; i++ {
-            certs[i] = <-inputStream
-        }
+        cert_data := <-inputStream
 
-        log.Info("Inserting batch of", batchSize, "certs")
+        for _, rule := range ruleset.Rules {
+            if result, match := rule.Eval(cert_data); match {
+                // TODO how do we access the important fields of the rule? Rule objects are completely inaccessible?
+                allDomains, _ := cert_data.Select("leaf_cert.all_domains")
+                fingerprint, _ := cert_data.Select("leaf_cert.fingerprint")
+                fingerprint = strings.ToLower(strings.ReplaceAll(fingerprint.(string), ":", ""))
 
-        // Insert batch of certs
-        tx, err := db.Begin()
-        if err != nil {
-            log.Error(err)
-            continue
-        }
-
-        for i := 0; i < batchSize; i++ {
-            _, err := tx.Exec("INSERT INTO certs (common_name, domain, suffix, all_domains, seen, validity_seconds) VALUES ($1, $2, $3, $4, $5, $6)",
-                certs[i].CommonName, certs[i].Domain, certs[i].Suffix, pq.Array(certs[i].AllDomains), certs[i].Seen, certs[i].ValiditySeconds)
-            if err != nil {
-                log.Error(err)
-            }
-        }
-
-        err = tx.Commit()
-        if err != nil {
-            log.Error(err)
-            continue
-        }
-
-        log.Info("Batch inserted")
-
-        // Check table size
-        row := db.QueryRow("SELECT COUNT(*) FROM certs")
-        err = row.Scan(&count)
-        if err != nil {
-            log.Error(err)
-            continue
-        }
-
-        if count > 2500000 {
-            log.Info(count, "rows in table, trimming oldest 10k rows")
-            _, err = db.Exec("DELETE FROM certs WHERE ctid IN (SELECT ctid FROM certs ORDER BY seen LIMIT 10000)")
-            if err != nil {
-                log.Error(err)
+                log.Infof("Match for \"%s\": %s (%s)", result.Title, allDomains, fingerprint)
             }
         }
     }
 }
 
-func main() {
-    logging.SetFormatter(logFormatter)
+func setupLogging() {
+    // Log to file
+    logFile, err := os.OpenFile("certhunt.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if err != nil {
+        log.Fatal("Failed to open log file:", err)
+    }
 
-    log.Info("Initializing")
-    certs := make(chan Certificate, 2000)
-    go streamCerts(certs)
-    storeCerts(certs)
+    backendConsole := logging.NewLogBackend(os.Stderr, "", 0)
+    backendFile    := logging.NewLogBackend(logFile, "", 0)
+
+    formatConsole := logging.MustStringFormatter(`%{color}%{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
+    formatFile    := logging.MustStringFormatter(`%{time:2006-01-02T15:04:05} %{level} %{message}`)
+
+    backendConsoleFormatter := logging.NewBackendFormatter(backendConsole, formatConsole)
+    backendFileFormatter    := logging.NewBackendFormatter(backendFile, formatFile)
+
+    backendFileLeveled := logging.AddModuleLevel(backendFileFormatter)
+    backendFileLeveled.SetLevel(logging.INFO, "")
+
+    logging.SetBackend(backendConsoleFormatter, backendFileLeveled)
+}
+
+func main() {
+    setupLogging()
+
+    certs := make(chan DynamicMap)
+
+    workerCount := 5
+    for i := 0; i < workerCount; i++ {
+        go matchCerts(certs)
+    }
+
+    streamCerts(certs)
 }

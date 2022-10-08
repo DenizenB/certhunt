@@ -1,0 +1,23 @@
+title: Tonga (.to) Certificate Issued by Let's Encrypt
+id: 7b2ee599-4108-4b27-8ab8-dfa1b2533a48
+status: experimental
+description: Certificate for Tonga (.to) domains issued by Let's Encrypt
+author: DenizenB
+references:
+  - https://en.wikipedia.org/wiki/.to
+date: 2022/10/08
+tags: []
+logsource:
+  category: certstream
+detection:
+  selection:
+    leaf_cert.issuer.O: "Let's Encrypt"
+    leaf_cert.all_domains|re: "\\.to(,|$)"
+  condition: selection
+fields:
+  - leaf_cert.subject.CN
+  - leaf_cert.all_domains
+  - leaf_cert.issuer.O
+falsepositives:
+  - No
+level: informational
