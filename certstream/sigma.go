@@ -19,11 +19,22 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
     if len(bits) == 0 {
         return nil, false
     }
+
     if val, ok := data[bits[0]]; ok {
         switch res := val.(type) {
         case map[string]interface{}:
             return GetField(bits[1], res)
+        case []string:
+            if len(bits) == 2 && bits[1] == "length" {
+                return len(res), ok
+            }
+
+            return strings.Join(res, ","), ok
         case []interface{}:
+            if len(bits) == 2 && bits[1] == "length" {
+                return len(res), ok
+            }
+
             // Assume list of strings, join into single string
             values := make([]string, len(res))
             for i := range res {
@@ -35,7 +46,7 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
         case nil:
             return val, ok
         default:
-            log.Debug("unexpected type:", reflect.TypeOf(res))
+            log.Debug("Unknown type", reflect.TypeOf(res))
             return val, ok
         }
     }

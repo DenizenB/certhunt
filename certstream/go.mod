@@ -14,5 +14,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jmoiron/jsonq v0.0.0-20150511023944-e874b168d07e // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	golang.org/x/exp v0.0.0-20221012134508-3640c57a48ea // indirect
+	golang.org/x/net v0.0.0-20221012135044-0b7e1fb9d458 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

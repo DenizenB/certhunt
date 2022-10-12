@@ -6,10 +6,10 @@ import (
     "strings"
 
     logging "github.com/op/go-logging"
-
     "github.com/CaliDog/certstream-go"
-
     "github.com/paulbellamy/ratecounter"
+    "golang.org/x/exp/slices"
+    "golang.org/x/net/publicsuffix"
 )
 
 var log = logging.MustGetLogger("certhunt")
@@ -34,6 +34,31 @@ func streamCerts(outputStream chan<- DynamicMap) {
                 certCounter.Incr(1)
 
                 data, _ := jq.Object("data")
+
+                // Enrich message
+                if leaf_cert, ok := data["leaf_cert"]; ok {
+                    leaf_cert := leaf_cert.(map[string]interface{})
+
+                    if all_domains, ok := leaf_cert["all_domains"]; ok {
+                        all_domains := all_domains.([]interface{})
+
+                        registered_domains := make([]string, 0)
+                        for _, domain := range all_domains {
+                            registered_domain, err := publicsuffix.EffectiveTLDPlusOne(domain.(string))
+                            if err != nil {
+                                log.Debug(err)
+                                continue
+                            }
+
+                            if !slices.Contains(registered_domains, registered_domain) {
+                                registered_domains = append(registered_domains, registered_domain)
+                            }
+                        }
+
+                        leaf_cert["registered_domains"] = registered_domains
+                    }
+                }
+
                 outputStream<- DynamicMap(data)
             case err := <-errors:
                 log.Debug(err)
@@ -63,7 +88,7 @@ func matchCerts(inputStream <-chan DynamicMap) {
         for _, rule := range ruleset.Rules {
             if result, match := rule.Eval(cert_data); match {
                 // TODO how do we access the important fields of the rule? Rule objects are completely inaccessible?
-                allDomains, _ := cert_data.Select("leaf_cert.all_domains")
+                allDomains, _ := cert_data.Select("leaf_cert.registered_domains")
                 fingerprint, _ := cert_data.Select("leaf_cert.fingerprint")
                 fingerprint = strings.ToLower(strings.ReplaceAll(fingerprint.(string), ":", ""))
 

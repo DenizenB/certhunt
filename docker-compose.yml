@@ -13,6 +13,8 @@ services:
     certstream:
         build: certstream
         restart: unless-stopped
+        environment:
+          - GOMEMLIMIT=10MiB
     redis:
         image: redis:alpine
         restart: unless-stopped
