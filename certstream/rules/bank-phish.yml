@@ -14,7 +14,7 @@ detection:
     leaf_cert.registered_domains|re: "(bankid|handelsbanken|swedbank|nordea|seb-|-seb|seblt|danskebank|sbab|skandiabanken|icabanken)\\b"
   condition: selection
 fields:
-  - leaf_cert.subject.CN
+  - leaf_cert.registered_domains
   - leaf_cert.all_domains
   - leaf_cert.issuer.O
 falsepositives:

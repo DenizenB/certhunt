@@ -3,6 +3,8 @@ package main
 import (
     "strings"
     "reflect"
+    "strconv"
+    "regexp"
 
     sigma "github.com/markuskont/go-sigma-rule-engine"
 )
@@ -25,21 +27,32 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
         case map[string]interface{}:
             return GetField(bits[1], res)
         case []string:
-            if len(bits) == 2 && bits[1] == "length" {
-                return len(res), ok
+            if len(bits) == 2 {
+                if bits[1] == "length" {
+                    return len(res), ok
+                }
+                if index, err := strconv.Atoi(bits[1]); err == nil {
+                    return res[index], ok
+                }
             }
 
             return strings.Join(res, ","), ok
         case []interface{}:
-            if len(bits) == 2 && bits[1] == "length" {
-                return len(res), ok
+            if len(bits) == 2 {
+                if bits[1] == "length" {
+                    return len(res), ok
+                }
+                if index, err := strconv.Atoi(bits[1]); err == nil {
+                    return res[index], ok
+                }
             }
 
-            // Assume list of strings, join into single string
+            // Cast to list of strings
             values := make([]string, len(res))
             for i := range res {
                 values[i] = res[i].(string)
             }
+
             return strings.Join(values, ","), ok
         case string:
             return val, ok
@@ -66,5 +79,16 @@ func LoadRules(path string) (*sigma.Ruleset, error) {
         Directory: []string{path},
         FailOnRuleParse: true,
         FailOnYamlParse: true,
+    })
+}
+
+var templatePattern = regexp.MustCompile(`\{\{[^}]+\}\}`)
+func FormatRuleDescription(rule *sigma.RuleHandle, cert_data DynamicMap) string {
+    return templatePattern.ReplaceAllStringFunc(rule.Description, func(field string) string {
+        field = field[2:len(field)-2]
+        if result, ok := cert_data.Select(field); ok {
+            return result.(string)
+        }
+        return "?"
     })
 }

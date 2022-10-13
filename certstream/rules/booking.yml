@@ -1,7 +1,7 @@
 title: Booking Phishlet
 id: 3a8978e9-51f6-4b9f-9407-1ea94d330817
 status: experimental
-description: Subdomains used by Evilginx2 phishlets
+description: "Certificate matches Booking phishlet, landing page: {{leaf_cert.all_domains.0}}"
 author: DenizenB
 references:
   - https://github.com/kgretzky/evilginx2/tree/master/phishlets
@@ -25,9 +25,7 @@ detection:
       - "(^|,)r\\."
   condition: selection
 fields:
-  - leaf_cert.subject.CN
-  - leaf_cert.all_domains
-  - leaf_cert.issuer.O
+  - leaf_cert.registered_domains
 falsepositives:
   - Yes
 level: high

@@ -28,9 +28,8 @@ detection:
       - "(^|,)images\\."
   condition: selection
 fields:
-  - leaf_cert.subject.CN
+  - leaf_cert.registered_domains
   - leaf_cert.all_domains
-  - leaf_cert.issuer.O
 falsepositives:
   - Yes
 level: high

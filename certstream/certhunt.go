@@ -4,6 +4,7 @@ import (
     "os"
     "time"
     "strings"
+    "fmt"
 
     logging "github.com/op/go-logging"
     "github.com/CaliDog/certstream-go"
@@ -87,12 +88,19 @@ func matchCerts(inputStream <-chan DynamicMap) {
 
         for _, rule := range ruleset.Rules {
             if result, match := rule.Eval(cert_data); match {
-                // TODO how do we access the important fields of the rule? Rule objects are completely inaccessible?
-                allDomains, _ := cert_data.Select("leaf_cert.registered_domains")
                 fingerprint, _ := cert_data.Select("leaf_cert.fingerprint")
                 fingerprint = strings.ToLower(strings.ReplaceAll(fingerprint.(string), ":", ""))
 
-                log.Infof("Match for \"%s\": %s (%s)", result.Title, allDomains, fingerprint)
+                output := fmt.Sprintf("Match for \"%s\" (%s)", result.Title, fingerprint)
+                output += "\n\tDescription: " + FormatRuleDescription(rule.Rule, cert_data)
+                output += "\n\tFields:"
+                for _, field := range rule.Rule.Rule.Fields {
+                    if value, ok := cert_data.Select(field); ok {
+                        output += fmt.Sprintf("\n\t\t%s: %s", field, value)
+                    }
+                }
+
+                log.Info(output)
             }
         }
     }
