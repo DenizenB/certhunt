@@ -4,7 +4,7 @@ status: experimental
 author: DenizenB
 date: 2022-10-05
 references:
-  - https://github.com/kgretzky/evilginx2/tree/master/phishlets/facebook.yml
+  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/facebook.yaml
 tags:
   - Phishing
 detection:
