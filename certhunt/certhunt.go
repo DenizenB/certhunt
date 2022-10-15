@@ -107,6 +107,8 @@ func matchCerts(inputStream <-chan map[string]interface{}) {
                 fingerprint = strings.ToLower(strings.ReplaceAll(fingerprint, ":", ""))
                 log.Infof("Match for \"%s\" (%s)", result.Title, fingerprint)
 
+                seenUnix, _ := jq.Float("seen")
+                seenDate := time.Unix(int64(seenUnix), 0).Format("2006-01-02")
                 registeredDomains, err := jq.ArrayOfStrings("leaf_cert", "registered_domains")
                 if err != nil {
                     log.Error(err)
@@ -125,7 +127,7 @@ func matchCerts(inputStream <-chan map[string]interface{}) {
                     EventTags: result.Tags,
                     Type: "domain",
                     Value: registeredDomains[0],
-                    Comment: "First seen: ",
+                    Comment: "Observed in Certstream: " + seenDate,
                 }
 
                 jsonAttr, err := json.Marshal(attribute)
