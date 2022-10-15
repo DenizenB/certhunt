@@ -6,7 +6,7 @@ date: 2022-10-05
 references:
   - https://github.com/kgretzky/evilginx2/tree/master/phishlets
 tags:
-  - Phishiing
+  - Phishing
 detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
