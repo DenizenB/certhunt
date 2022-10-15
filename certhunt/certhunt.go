@@ -127,7 +127,7 @@ func matchCerts(inputStream <-chan map[string]interface{}) {
                     EventTags: result.Tags,
                     Type: "domain",
                     Value: registeredDomains[0],
-                    Comment: "Observed in Certstream: " + seenDate,
+                    Comment: fmt.Sprintf("Observed in Certstream: %s. Certificate sha1: %s", seenDate, fingerprint),
                 }
 
                 jsonAttr, err := json.Marshal(attribute)
