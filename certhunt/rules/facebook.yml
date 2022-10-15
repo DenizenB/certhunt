@@ -4,13 +4,15 @@ status: experimental
 author: DenizenB
 date: 2022-10-05
 references:
-  - https://github.com/kgretzky/evilginx2/tree/master/phishlets
+  - https://github.com/kgretzky/evilginx2/tree/master/phishlets/facebook.yml
 tags:
   - Phishing
 detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
-    leaf_cert.all_domains.length: 3
+    leaf_cert.all_domains.length:
+      - 3
+      - 4
     leaf_cert.all_domains|re|all:
       - "(^|,)www\\."
       - "(^|,)m\\."

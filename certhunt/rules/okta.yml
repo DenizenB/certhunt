@@ -1,10 +1,10 @@
-title: Amazon Phishlet
+title: Okta Phishlet
 description: Subdomains used by Evilginx2 phishlets
 status: experimental
 author: DenizenB
 date: 2022-10-05
 references:
-  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/amazon.yaml
+  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/okta.yaml
 tags:
   - Phishing
 detection:
@@ -12,9 +12,9 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
     leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)fls-na\\."
-      - "(^|,)images-na\\."
-  condition: selection
+      - "(^|,)login\\."
+  reduce_fp:
+    leaf_cert.all_domains|contains: "okta"
+  condition: selection and reduce_fp
 falsepositives:
   - Unknown

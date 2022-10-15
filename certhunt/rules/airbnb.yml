@@ -4,7 +4,7 @@ status: experimental
 author: DenizenB
 date: 2022-10-05
 references:
-  - https://github.com/kgretzky/evilginx2/tree/master/phishlets/airbnb.yml
+  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/airbnb.yaml
 tags:
   - Phishing
 detection:

@@ -1,20 +1,23 @@
-title: Amazon Phishlet
+title: Dropbox Phishlet
 description: Subdomains used by Evilginx2 phishlets
 status: experimental
 author: DenizenB
 date: 2022-10-05
 references:
-  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/amazon.yaml
+  - https://github.com/charlesbel/evilginx2/blob/1cca7a5af260e7da57470b541963055d33ad8a57/phishlets/dropbox.yaml
 tags:
   - Phishing
 detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
-    leaf_cert.all_domains.length: 3
+    leaf_cert.all_domains.length: 6
     leaf_cert.all_domains|re|all:
       - "(^|,)www\\."
-      - "(^|,)fls-na\\."
-      - "(^|,)images-na\\."
+      - "(^|,)dropbox-api\\."
+      - "(^|,)client-api\\."
+      - "(^|,)cdn\\."
+      - "(^|,)static\\."
+      - "(^|,)bolt\\."
   condition: selection
 falsepositives:
   - Unknown

@@ -1,20 +1,17 @@
-title: Amazon Phishlet
+title: WatchGuard VPN Phishlet
 description: Subdomains used by Evilginx2 phishlets
 status: experimental
 author: DenizenB
 date: 2022-10-05
 references:
-  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/amazon.yaml
+  - https://github.com/redteam-fp/evilginx2/blob/269f9ffc7f95f9893202f9aa2e32748752e9acd4/phishlets/watchguard.yaml
 tags:
   - Phishing
 detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
-    leaf_cert.all_domains.length: 3
-    leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)fls-na\\."
-      - "(^|,)images-na\\."
+    leaf_cert.all_domains.length: 1
+    leaf_cert.all_domains|startswith: "tryauthpoint."
   condition: selection
 falsepositives:
   - Unknown

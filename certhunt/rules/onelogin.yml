@@ -1,20 +1,17 @@
-title: Amazon Phishlet
+title: OneLogin Phishlet
 description: Subdomains used by Evilginx2 phishlets
 status: experimental
 author: DenizenB
-date: 2022-10-05
+date: 2022-10-15
 references:
-  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/amazon.yaml
+  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/onelogin.yaml
 tags:
   - Phishing
 detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
-    leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)fls-na\\."
-      - "(^|,)images-na\\."
+    leaf_cert.all_domains|re: "(^|,)portal-cdn\\."
   condition: selection
 falsepositives:
   - Unknown

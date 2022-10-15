@@ -1,10 +1,10 @@
-title: Amazon Phishlet
+title: Netflix Phishlet
 description: Subdomains used by Evilginx2 phishlets
 status: experimental
 author: DenizenB
-date: 2022-10-05
+date: 2022-10-15
 references:
-  - https://github.com/kgretzky/evilginx2/blob/master/phishlets/amazon.yaml
+  - https://github.com/charlesbel/evilginx2/blob/100451cbb0560098a4aaf14c31b39462e72bf8a4/phishlets/netflix.yaml
 tags:
   - Phishing
 detection:
@@ -13,8 +13,8 @@ detection:
     leaf_cert.all_domains.length: 3
     leaf_cert.all_domains|re|all:
       - "(^|,)www\\."
-      - "(^|,)fls-na\\."
-      - "(^|,)images-na\\."
+      - "(^|,)codex\\."
+      - "(^|,)assets\\."
   condition: selection
 falsepositives:
   - Unknown

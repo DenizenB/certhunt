@@ -1,0 +1,24 @@
+title: Google Phishlet
+description: Subdomains used by Evilginx2 phishlets
+status: experimental
+author: DenizenB
+date: 2022-10-15
+references:
+  - https://github.com/kippygaming/evilginx2-2/blob/4e2790b0957ab7f75ded36bd9b3f6816070821b8/phishlets/google.yaml
+tags:
+  - Phishing
+detection:
+  selection:
+    leaf_cert.issuer.O: "Let's Encrypt"
+    leaf_cert.all_domains.length: 7
+    leaf_cert.all_domains|re|all:
+      - "(^|,)www\\."
+      - "(^|,)accounts\\."
+      - "(^|,)ssl\\."
+      - "(^|,)play\\."
+      - "(^|,)myaccount\\."
+      - "(^|,)apis\\."
+      - "(^|,)content\\."
+  condition: selection
+falsepositives:
+  - Unknown
