@@ -1,15 +1,11 @@
 title: Amazon Phishlet - Evilginx2
-id: 3a8978e9-51f6-4b9f-9407-1ea94d330817
+description: Subdomains used by Evilginx2 phishlets
 status: experimental
-description: "Certificate matches Amazon phishlet, landing page: {{leaf_cert.all_domains.0}}"
 author: DenizenB
+date: 2022-10-05
 references:
   - https://github.com/kgretzky/evilginx2/tree/master/phishlets
-date: 2022/10/05
 tags: []
-logsource:
-  category: certificate
-  product: certstream
 detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
@@ -19,8 +15,5 @@ detection:
       - "(^|,)fls-na\\."
       - "(^|,)images-na\\."
   condition: selection
-fields:
-  - leaf_cert.registered_domains
 falsepositives:
-  - Yes
-level: high
+  - Unknown
