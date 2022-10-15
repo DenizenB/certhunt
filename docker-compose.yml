@@ -10,8 +10,8 @@ services:
           - URLSCAN_KEY
         depends_on:
           - redis
-    certstream:
-        build: certstream
+    certhunt:
+        build: certhunt
         restart: unless-stopped
         environment:
           - GOMEMLIMIT=10MiB
