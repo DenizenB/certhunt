@@ -21,6 +21,7 @@ type MispAttribute struct {
     Type string `json:"type"`
     Value string `json:"value"`
     Comment string `json:"comment"`
+    Certificate map[string]interface{} `json:"certificate"`
 }
 
 var log = logging.MustGetLogger("certhunt")
@@ -128,6 +129,7 @@ func matchCerts(inputStream <-chan map[string]interface{}) {
                     Type: "domain",
                     Value: registeredDomains[0],
                     Comment: fmt.Sprintf("Observed in Certstream: %s. Certificate sha1: %s", seenDate, fingerprint),
+                    Certificate: certData,
                 }
 
                 jsonAttr, err := json.Marshal(attribute)
