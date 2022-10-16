@@ -1,5 +1,10 @@
 FROM golang:alpine
 
+RUN mkdir /app && chown 405: /app
+
+# Alpine guest user
+USER 405
+ENV GOPATH=/app/.gopath GOCACHE=/app/.gocache
 WORKDIR /app
 
 # Install dependencies

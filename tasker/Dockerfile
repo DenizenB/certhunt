@@ -1,11 +1,13 @@
 FROM python:3-alpine
 
+RUN mkdir /app && chown 405: /app
+USER 405
+ENV HOME=/app
 WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
-RUN apk update \
-    && pip install -r requirements.txt --disable-pip-version-check \
+RUN pip install -r requirements.txt --disable-pip-version-check \
     && rm requirements.txt
 
 # Copy src into /app
