@@ -31,6 +31,7 @@ func streamCerts(outputStream chan<- map[string]interface{}) {
     var lastPrint = time.Now()
 
     averageInterval := printInterval
+    msgCounter := ratecounter.NewRateCounter(averageInterval)
     certCounter := ratecounter.NewRateCounter(averageInterval)
 
     log.Debug("Connecting to Certstream")
@@ -38,8 +39,15 @@ func streamCerts(outputStream chan<- map[string]interface{}) {
     for {
         select {
             case jq := <-certs:
-                messageType, _ := jq.String("message_type")
-                if messageType != "certificate_update" {
+                msgCounter.Incr(1)
+
+                // Ignore heartbeats
+                if messageType, _ := jq.String("message_type"); messageType != "certificate_update" {
+                    continue
+                }
+
+                // Ignore pre-cert entries
+                if updateType, _ := jq.String("data", "update_type"); updateType == "PrecertLogEntry" {
                     continue
                 }
 
@@ -79,9 +87,10 @@ func streamCerts(outputStream chan<- map[string]interface{}) {
         }
 
         if time.Since(lastPrint) >= printInterval {
+            msgRate := float64(msgCounter.Rate()) / averageInterval.Seconds()
             certRate := float64(certCounter.Rate()) / averageInterval.Seconds()
 
-            log.Debug(certRate, "certs/s")
+            log.Debugf("%0.f certs/s (%0.f messages/s)", certRate, msgRate)
             lastPrint = time.Now()
         }
     }
