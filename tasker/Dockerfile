@@ -1,9 +1,10 @@
 FROM python:3-alpine
 
-RUN mkdir /app && chown 405: /app
+# Alpine guest user
+WORKDIR /app
+RUN chown 405: /app
 USER 405
 ENV HOME=/app
-WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
