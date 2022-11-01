@@ -97,13 +97,15 @@ func streamCerts(certs chan<- map[string]interface{}) {
     }
 }
 
-func matchCerts(certs <-chan map[string]interface{}, attributes chan<- MispAttribute) {
+func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan<- MispAttribute) {
     // Load rules
-    log.Debug("Loading Sigma rules")
     ruleset, err := LoadRules("./rules")
     if err != nil {
         log.Fatal(err)
     }
+
+    log.Debugf("Worker %d: Loaded %d/%d rules (%d failed, %d unsupported)",
+        worker, ruleset.Ok, ruleset.Total, ruleset.Failed, ruleset.Unsupported)
 
     // Match certs
     for {
@@ -200,8 +202,8 @@ func main() {
     attributes := make(chan MispAttribute)
 
     workerCount := 5
-    for i := 0; i < workerCount; i++ {
-        go matchCerts(certs, attributes)
+    for id := 1; id <= workerCount; id++ {
+        go matchCerts(id, certs, attributes)
     }
 
     go writeAttributes(attributes)
