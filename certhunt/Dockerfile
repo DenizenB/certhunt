@@ -1,11 +1,11 @@
 FROM golang:alpine
 
-RUN mkdir /app && chown 405: /app
+WORKDIR /app
 
 # Alpine guest user
+RUN chown 405: /app
 USER 405
 ENV GOPATH=/app/.gopath GOCACHE=/app/.gocache
-WORKDIR /app
 
 # Install dependencies
 COPY go.mod go.sum ./
