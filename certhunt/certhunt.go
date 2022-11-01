@@ -7,12 +7,14 @@ import (
     "encoding/json"
     "fmt"
     "bufio"
+    "context"
 
     logging "github.com/op/go-logging"
     "github.com/CaliDog/certstream-go"
     "github.com/jmoiron/jsonq"
     "github.com/paulbellamy/ratecounter"
     "golang.org/x/net/publicsuffix"
+    "github.com/go-redis/redis/v8"
 )
 
 type MispAttribute struct {
@@ -172,26 +174,46 @@ func setupLogging() {
     logging.SetBackend(backendConsoleFormatter, backendFileLeveled)
 }
 
-func writeAttributes(attributes chan MispAttribute) {
+func createAttributes(attributes chan MispAttribute) {
+    // Connect to redis
+    rdb := redis.NewClient(&redis.Options{
+        Addr: "redis:6379",
+        DB:   1,
+    })
+    ctx := context.Background()
+
+    // Open output file
     file, err := os.OpenFile("attributes.jsonl", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
     if err != nil {
         log.Fatal(err)
     }
     defer file.Close()
-
     writer := bufio.NewWriter(file)
 
     for {
         attribute := <-attributes
+        redisKey := "attr:" + attribute.Event + ":" + attribute.Value
+
+        // Check if already added
+        if rdb.Get(ctx, redisKey).Err() != redis.Nil {
+            // Already added
+            log.Debugf("Attribute '%s' already added to MISP event '%s', skipping", attribute.Value, attribute.Event)
+            continue
+        }
 
         jsonAttr, err := json.Marshal(attribute)
         if err != nil {
-            log.Error(err)
+            log.Errorf("failed to json encode: %s", err)
             continue
         }
 
         writer.WriteString(string(jsonAttr) + "\n")
         writer.Flush()
+
+        // Add to redis
+        if err := rdb.SetNX(ctx, redisKey, "", 90*24*time.Hour).Err(); err != nil {
+            log.Errorf("failed to set redis key '%s': %s", redisKey, err)
+        }
     }
 }
 
@@ -206,7 +228,7 @@ func main() {
         go matchCerts(id, certs, attributes)
     }
 
-    go writeAttributes(attributes)
+    go createAttributes(attributes)
 
     streamCerts(certs)
 }
