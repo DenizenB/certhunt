@@ -73,7 +73,7 @@ Enrichment fields:
 
 ## Writing rules
 
-The rules are written according to the [Sigma 1.0 specification](https://github.com/SigmaHQ/sigma-specification/blob/3d7aa6365eb061b75285dd9efc6c08c20b8fecd6/Sigma_1_0_1.md), with a few caveats.
+Rules are written according to the [Sigma 1.0 specification](https://github.com/SigmaHQ/sigma-specification/blob/3d7aa6365eb061b75285dd9efc6c08c20b8fecd6/Sigma_1_0_1.md), with a few caveats.
 
 ### Lists of strings
 
