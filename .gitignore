@@ -1,4 +1,7 @@
-.env
-*.swp
-**/__pycache__
+/.env
 /data
+/attributes.jsonl
+
+*.swp
+*.log
+**/__pycache__

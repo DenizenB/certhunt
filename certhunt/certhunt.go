@@ -6,6 +6,7 @@ import (
     "strings"
     "encoding/json"
     "fmt"
+    "bufio"
 
     logging "github.com/op/go-logging"
     "github.com/CaliDog/certstream-go"
@@ -26,7 +27,7 @@ type MispAttribute struct {
 
 var log = logging.MustGetLogger("certhunt")
 
-func streamCerts(outputStream chan<- map[string]interface{}) {
+func streamCerts(certs chan<- map[string]interface{}) {
     printInterval := 10 * time.Second
     var lastPrint = time.Now()
 
@@ -35,10 +36,10 @@ func streamCerts(outputStream chan<- map[string]interface{}) {
     certCounter := ratecounter.NewRateCounter(averageInterval)
 
     log.Debug("Connecting to Certstream")
-    certs, errors := certstream.CertStreamEventStream(false)
+    events, errors := certstream.CertStreamEventStream(false)
     for {
         select {
-            case jq := <-certs:
+            case jq := <-events:
                 msgCounter.Incr(1)
 
                 // Ignore heartbeats
@@ -81,7 +82,7 @@ func streamCerts(outputStream chan<- map[string]interface{}) {
                     }
                 }
 
-                outputStream<- data
+                certs<- data
             case err := <-errors:
                 log.Debug(err)
         }
@@ -96,7 +97,7 @@ func streamCerts(outputStream chan<- map[string]interface{}) {
     }
 }
 
-func matchCerts(inputStream <-chan map[string]interface{}) {
+func matchCerts(certs <-chan map[string]interface{}, attributes chan<- MispAttribute) {
     // Load rules
     log.Debug("Loading Sigma rules")
     ruleset, err := LoadRules("./rules")
@@ -106,7 +107,7 @@ func matchCerts(inputStream <-chan map[string]interface{}) {
 
     // Match certs
     for {
-        certData := <-inputStream
+        certData := <-certs
         event := DynamicMap(certData)
 
         for _, rule := range ruleset.Rules {
@@ -141,13 +142,7 @@ func matchCerts(inputStream <-chan map[string]interface{}) {
                     Certificate: certData,
                 }
 
-                jsonAttr, err := json.Marshal(attribute)
-                if err != nil {
-                    log.Error(err)
-                    continue
-                }
-
-                fmt.Println(string(jsonAttr))
+                attributes<- attribute
             }
         }
     }
@@ -175,15 +170,41 @@ func setupLogging() {
     logging.SetBackend(backendConsoleFormatter, backendFileLeveled)
 }
 
+func writeAttributes(attributes chan MispAttribute) {
+    file, err := os.OpenFile("attributes.jsonl", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
+
+    writer := bufio.NewWriter(file)
+
+    for {
+        attribute := <-attributes
+
+        jsonAttr, err := json.Marshal(attribute)
+        if err != nil {
+            log.Error(err)
+            continue
+        }
+
+        writer.WriteString(string(jsonAttr) + "\n")
+        writer.Flush()
+    }
+}
+
 func main() {
     setupLogging()
 
     certs := make(chan map[string]interface{})
+    attributes := make(chan MispAttribute)
 
     workerCount := 5
     for i := 0; i < workerCount; i++ {
-        go matchCerts(certs)
+        go matchCerts(certs, attributes)
     }
+
+    go writeAttributes(attributes)
 
     streamCerts(certs)
 }

@@ -8,7 +8,7 @@ ENV HOME=/app
 
 # Install dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt --disable-pip-version-check \
+RUN pip install -r requirements.txt --disable-pip-version-check --no-warn-script-location \
     && rm requirements.txt
 
 # Copy src into /app
