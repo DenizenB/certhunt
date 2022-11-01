@@ -17,8 +17,8 @@ services:
         environment:
           - GOMEMLIMIT=10MiB
         volumes:
-          - ./certhunt.log:/app/certhunt.log
-          - ./attributes.jsonl:/app/attributes.jsonl
+          - ./data/certhunt/certhunt.log:/app/certhunt.log
+          - ./data/certhunt/attributes.jsonl:/app/attributes.jsonl
     redis:
         image: redis:alpine
         restart: unless-stopped
