@@ -12,7 +12,6 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length:
       - 3
-      - 4
     leaf_cert.all_domains|re|all:
       - "(^|,)www\\."
       - "(^|,)m\\."

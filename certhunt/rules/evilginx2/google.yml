@@ -11,14 +11,13 @@ detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 7
-    leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)accounts\\."
-      - "(^|,)ssl\\."
-      - "(^|,)play\\."
-      - "(^|,)myaccount\\."
-      - "(^|,)apis\\."
-      - "(^|,)content\\."
+    leaf_cert.all_domains.0|startswith: accounts.
+    leaf_cert.all_domains.1|startswith: apis.
+    leaf_cert.all_domains.2|startswith: content.
+    leaf_cert.all_domains.3|startswith: myaccount.
+    leaf_cert.all_domains.4|startswith: play.
+    leaf_cert.all_domains.5|startswith: ssl.
+    leaf_cert.all_domains.6|startswith: www.
   condition: selection
 falsepositives:
   - Unknown

@@ -11,9 +11,8 @@ detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 2
-    leaf_cert.all_domains|re|all:
-      - "(^|,)mail\\."
-      - "(^|,)leak\\."
+    leaf_cert.all_domains.0|startswith: leak.
+    leaf_cert.all_domains.1|startswith: mail.
   condition: selection
 falsepositives:
   - Unknown

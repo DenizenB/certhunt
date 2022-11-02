@@ -13,6 +13,9 @@ detection:
     leaf_cert.all_domains.length:
       - 6
       - 7
+
+    # domains are sorted alphabetically
+    # one of the domains is the actor's domain - therefore we don't know which order they have
     leaf_cert.all_domains|re|all:
       - "(^|,)www\\."
       - "(^|,)c\\."

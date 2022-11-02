@@ -11,10 +11,9 @@ detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
-    leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)fls-na\\."
-      - "(^|,)images-na\\."
+    leaf_cert.all_domains.0|startswith: fls-na.
+    leaf_cert.all_domains.1|startswith: images-na.
+    leaf_cert.all_domains.2|startswith: www.
   condition: selection
 falsepositives:
   - Unknown

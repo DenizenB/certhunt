@@ -11,10 +11,9 @@ detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
-    leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)codex\\."
-      - "(^|,)assets\\."
+    leaf_cert.all_domains.0|startswith: assets.
+    leaf_cert.all_domains.1|startswith: codex.
+    leaf_cert.all_domains.2|startswith: www.
   condition: selection
 falsepositives:
   - Unknown

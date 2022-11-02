@@ -11,13 +11,12 @@ detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 6
-    leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)dropbox-api\\."
-      - "(^|,)client-api\\."
-      - "(^|,)cdn\\."
-      - "(^|,)static\\."
-      - "(^|,)bolt\\."
+    leaf_cert.all_domains.0|startswith: bolt.
+    leaf_cert.all_domains.1|startswith: cdn.
+    leaf_cert.all_domains.2|startswith: client-api.
+    leaf_cert.all_domains.3|startswith: dropbox-api.
+    leaf_cert.all_domains.4|startswith: static.
+    leaf_cert.all_domains.5|startswith: www.
   condition: selection
 falsepositives:
   - Unknown
