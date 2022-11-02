@@ -67,7 +67,7 @@ Sigma rules are evaluated against the JSON certificate format used by Certstream
 }
 ```
 
-Enrichment fields:
+**Enrichment fields:**
 
 * `leaf_cert.registered_domains` is an enrichment field. It's calculated by mapping each domain in `leaf_cert.all_domains` to the "registered" domain with the help of the [Public Suffix List](https://publicsuffix.org/).
 
