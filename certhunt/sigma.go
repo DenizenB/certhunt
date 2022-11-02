@@ -31,9 +31,13 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
                 if bits[1] == "length" {
                     return len(res), ok
                 }
-                if index, err := strconv.Atoi(bits[1]); err == nil {
-                    return res[index], ok
+
+                index, err := strconv.Atoi(bits[1])
+                if err != nil || index < 0 || index > len(res) {
+                    return nil, false
                 }
+
+                return res[index], ok
             }
 
             return strings.Join(res, ","), ok
@@ -42,9 +46,13 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
                 if bits[1] == "length" {
                     return len(res), ok
                 }
-                if index, err := strconv.Atoi(bits[1]); err == nil {
-                    return res[index], ok
+
+                index, err := strconv.Atoi(bits[1])
+                if err != nil || index < 0 || index > len(res) {
+                    return nil, false
                 }
+
+                return res[index], ok
             }
 
             // Cast to list of strings
