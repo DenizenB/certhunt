@@ -201,16 +201,16 @@ func createAttributes(attributes chan MispAttribute) {
             continue
         }
 
+        // Write json to file
         jsonAttr, err := json.Marshal(attribute)
         if err != nil {
             log.Errorf("failed to json encode: %s", err)
             continue
         }
-
         writer.WriteString(string(jsonAttr) + "\n")
         writer.Flush()
 
-        // Add to redis
+        // Add to redis to avoid duplicate attributes
         if err := rdb.SetNX(ctx, redisKey, "", 90*24*time.Hour).Err(); err != nil {
             log.Errorf("failed to set redis key '%s': %s", redisKey, err)
         }
