@@ -77,7 +77,7 @@ Rules should follow the [Sigma 1.0 specification](https://github.com/SigmaHQ/sig
 
 ### Special handling of lists
 
-Due to Sigma [treating all values as case-insensitive strings](https://github.com/SigmaHQ/sigma-specification/blob/3d7aa6365eb061b75285dd9efc6c08c20b8fecd6/Sigma_1_0_1.md#general), I've made a few workarounds to support conditions against lists of strings (such as `leaf_cert.all_domains`).
+Due to Sigma [treating all values as strings](https://github.com/SigmaHQ/sigma-specification/blob/3d7aa6365eb061b75285dd9efc6c08c20b8fecd6/Sigma_1_0_1.md#general), I've made a few workarounds to support conditions against lists of strings (such as `leaf_cert.all_domains`).
 
 * If you write a condition against a list, the value is joined into a comma-separated string
 * A single element can be retrieved by appending `.<zero-based-index>` to the key, for example: `leaf_cert.all_domains.0`
