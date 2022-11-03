@@ -142,7 +142,7 @@ func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan
                     EventTags: result.Tags,
                     Type: "domain",
                     Value: registeredDomains[0],
-                    Comment: fmt.Sprintf("Observed in Certstream: %s. Certificate sha1: %s", seenDate, fingerprint),
+                    Comment: fmt.Sprintf("Certificate issued: %s\nCertificate sha1: %s", seenDate, fingerprint),
                     Certificate: certData,
                 }
 
