@@ -102,9 +102,9 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
     leaf_cert.all_domains|re|all:
-      - "(^|,)outlook\\."
-      - "(^|,)login\\."
-      - "(^|,)account\\."
+      - '(^|,)outlook\.'
+      - '(^|,)login\.'
+      - '(^|,)account\.'
   condition: selection
 falsepositives:
   - Unknown
