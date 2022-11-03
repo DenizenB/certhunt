@@ -12,7 +12,7 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
     leaf_cert.all_domains|re|all:
-      - "(^|,)login\\."
+      - '(^|,)login\.'
   reduce_fp:
     leaf_cert.all_domains|contains: "okta"
   condition: selection and reduce_fp

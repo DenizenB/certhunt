@@ -15,10 +15,10 @@ detection:
     # domains are sorted alphabetically
     # one of the domains is the actor's domain - therefore we don't know which order they have
     leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)muscache\\."
-      - "(^|,)google\\."
-      - "(^|,)gstatic\\."
+      - '(^|,)www\.'
+      - '(^|,)muscache\.'
+      - '(^|,)google\.'
+      - '(^|,)gstatic\.'
   condition: selection
 falsepositives:
   - Unknown

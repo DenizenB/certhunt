@@ -15,15 +15,15 @@ detection:
     # domains are sorted alphabetically
     # one of the domains is the actor's domain - therefore we don't know which order they have
     leaf_cert.all_domains|re|all:
-      - "(^|,)www\\."
-      - "(^|,)m\\."
-      - "(^|,)polyfill\\."
-      - "(^|,)s16\\."
-      - "(^|,)hypstarcdn\\."
-      - "(^|,)kakao\\."
-      - "(^|,)mon-va\\."
-      - "(^|,)maliva\\."
-      - "(^|,)sf16-muse-va\\."
+      - '(^|,)www\.'
+      - '(^|,)m\.'
+      - '(^|,)polyfill\.'
+      - '(^|,)s16\.'
+      - '(^|,)hypstarcdn\.'
+      - '(^|,)kakao\.'
+      - '(^|,)mon-va\.'
+      - '(^|,)maliva\.'
+      - '(^|,)sf16-muse-va\.'
   condition: selection
 falsepositives:
   - Unknown
