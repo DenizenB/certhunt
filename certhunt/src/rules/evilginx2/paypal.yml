@@ -13,16 +13,17 @@ detection:
     leaf_cert.all_domains.length:
       - 6
       - 7
+      - 8
 
-    # domains are sorted alphabetically
-    # one of the domains is the actor's domain - therefore we don't know which order they have
-    leaf_cert.all_domains|re|all:
-      - '(^|,)www\.'
-      - '(^|,)c\.'
-      - '(^|,)b\.stats\.'
-      - '(^|,)t\.'
-      - '(^|,)c6\.'
-      - '(^|,)hnd\.stats\.'
+    # there are a few different versions of this phishlet
+    # they have these 6 prefixes in common
+    leaf_cert.all_domains|startswith|all:
+      - www.
+      - c.
+      - b.stats.
+      - t.
+      - c6.
+      - hnd.stats.
   condition: selection
 falsepositives:
   - Unknown

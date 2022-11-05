@@ -12,20 +12,19 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 12
 
-    # domains are sorted alphabetically
-    # one of the domains is the actor's domain - therefore we don't know which order they have
-    leaf_cert.all_domains|re|all:
-      - '(^|,)www\.'
-      - '(^|,)ws\.'
-      - '(^|,)google\.'
-      - '(^|,)googletag\.'
-      - '(^|,)assets\.'
-      - '(^|,)dynamic\.'
-      - '(^|,)cdn\.'
-      - '(^|,)sessions\.'
-      - '(^|,)events\.'
-      - '(^|,)exceptions\.'
-      - '(^|,)images\.'
+    # 11/12 prefixes known
+    leaf_cert.all_domains|startswith|all:
+      - www.
+      - ws.
+      - google.
+      - googletag.
+      - assets.
+      - dynamic.
+      - cdn.
+      - sessions.
+      - events.
+      - exceptions.
+      - images.
   condition: selection
 falsepositives:
   - Unknown

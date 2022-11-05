@@ -12,13 +12,12 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 5
 
-    # domains are sorted alphabetically
-    # one of the domains is the actor's domain - therefore we don't know which order they have
-    leaf_cert.all_domains|re|all:
-      - '(^|,)www\.'
-      - '(^|,)muscache\.'
-      - '(^|,)google\.'
-      - '(^|,)gstatic\.'
+    # 4/5 prefixes are known
+    leaf_cert.all_domains|startswith|all:
+      - www.
+      - muscache.
+      - google.
+      - gstatic.
   condition: selection
 falsepositives:
   - Unknown

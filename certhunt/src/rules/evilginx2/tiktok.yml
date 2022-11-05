@@ -12,18 +12,17 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 10
 
-    # domains are sorted alphabetically
-    # one of the domains is the actor's domain - therefore we don't know which order they have
-    leaf_cert.all_domains|re|all:
-      - '(^|,)www\.'
-      - '(^|,)m\.'
-      - '(^|,)polyfill\.'
-      - '(^|,)s16\.'
-      - '(^|,)hypstarcdn\.'
-      - '(^|,)kakao\.'
-      - '(^|,)mon-va\.'
-      - '(^|,)maliva\.'
-      - '(^|,)sf16-muse-va\.'
+    # 9/10 prefixes known
+    leaf_cert.all_domains|startswith|all:
+      - www.
+      - m.
+      - polyfill.
+      - s16.
+      - hypstarcdn.
+      - kakao.
+      - mon-va.
+      - maliva.
+      - sf16-muse-va.
   condition: selection
 falsepositives:
   - Unknown

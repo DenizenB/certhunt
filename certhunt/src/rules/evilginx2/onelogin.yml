@@ -13,15 +13,19 @@ detection:
     leaf_cert.issuer.O: "Let's Encrypt"
   version1:
     leaf_cert.all_domains.length: 3
-    leaf_cert.all_domains|re|all:
-      - '(^|,)portal-cdn\.'
-      - '(^|,)example\.'
+
+    # 2/3 prefixes known
+    leaf_cert.all_domains|startswith|all:
+      - portal-cdn.
+      - example.
   version2:
     leaf_cert.all_domains.length: 5
-    leaf_cert.all_domains|re|all:
-      - '(^|,)portal-cdn\.'
-      - '(^|,)web-login-v2-cdn\.'
-      - '(^|,)cdn\.'
+
+    # 3/5 prefixes known
+    leaf_cert.all_domains|startswith|all:
+      - portal-cdn.
+      - web-login-v2-cdn.
+      - cdn.
   condition: letsencrypt and 1 of version*
 falsepositives:
   - Unknown
