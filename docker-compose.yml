@@ -24,6 +24,13 @@ services:
         restart: unless-stopped
         volumes:
           - ./data/redis:/data
+    mispbridge:
+        build: misp-bridge
+        restart: unless-stopped
+        environment:
+          - MISP_URL
+          - MISP_KEY
+          - MISP_VERIFYCERT
 
     # Restart certhunt daily due to suspected memory leak
     restarter:
