@@ -8,14 +8,14 @@ USER 405
 ENV GOPATH=/app/.gopath GOCACHE=/app/.gocache
 
 # Install dependencies
-COPY src/go.mod src/go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Build project
-COPY src/*.go ./
+COPY *.go ./
 RUN go build .
 
-COPY src/rules ./rules
+COPY rules ./rules
 
 # Run certhunt
 CMD ["./certhunt"]
