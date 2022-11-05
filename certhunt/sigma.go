@@ -26,27 +26,21 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
         switch res := val.(type) {
         case map[string]interface{}:
             return GetField(bits[1], res)
-        case []string:
-            if len(bits) == 2 {
-                if bits[1] == "length" {
-                    return len(res), ok
-                }
-
-                index, err := strconv.Atoi(bits[1])
-                if err != nil || index < 0 || index > len(res) {
-                    return nil, false
-                }
-
-                return res[index], ok
-            }
-
-            return strings.Join(res, ","), ok
         case []interface{}:
             if len(bits) == 2 {
                 if bits[1] == "length" {
                     return len(res), ok
                 }
 
+                if bits[1] == "join" {
+                    values := make([]string, len(res))
+                    for i := range res {
+                        values[i] = res[i].(string)
+                    }
+
+                    return strings.Join(values, ","), ok
+                }
+
                 index, err := strconv.Atoi(bits[1])
                 if err != nil || index < 0 || index > len(res) {
                     return nil, false
@@ -55,19 +49,13 @@ func GetField(key string, data map[string]interface{}) (interface{}, bool) {
                 return res[index], ok
             }
 
-            // Cast to list of strings
-            values := make([]string, len(res))
-            for i := range res {
-                values[i] = res[i].(string)
-            }
-
-            return strings.Join(values, ","), ok
+            return val, ok
         case string:
             return val, ok
         case nil:
             return val, ok
         default:
-            log.Debug("Unknown type", reflect.TypeOf(res))
+            log.Debug("Unknown value type:", reflect.TypeOf(res))
             return val, ok
         }
     }
