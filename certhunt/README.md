@@ -79,8 +79,8 @@ Rules should follow the [Sigma 1.0 specification](https://github.com/SigmaHQ/sig
 
 Due to Sigma [treating all values as strings](https://github.com/SigmaHQ/sigma-specification/blob/3d7aa6365eb061b75285dd9efc6c08c20b8fecd6/Sigma_1_0_1.md#general), I've made a few workarounds to support conditions against lists of strings (such as `leaf_cert.all_domains`).
 
-* If you write a condition against a list, the value is joined into a comma-separated string
-* A single element can be retrieved by appending `.<zero-based-index>` to the key, for example: `leaf_cert.all_domains.0`
+* If you write a condition against a list, it is considered a match if ANY element matches the condition
+* A specific element can be retrieved by appending `.<zero-based-index>` to the key, for example: `leaf_cert.all_domains.0`
 * The length of a list can be retrieved by appending `.length` to the key, for example: `leaf_cert.all_domains.length`
 
 ### Example rule
@@ -101,10 +101,10 @@ detection:
   selection:
     leaf_cert.issuer.O: "Let's Encrypt"
     leaf_cert.all_domains.length: 3
-    leaf_cert.all_domains|re|all:
-      - '(^|,)outlook\.'
-      - '(^|,)login\.'
-      - '(^|,)account\.'
+    leaf_cert.all_domains|startswith|all:
+      - outlook.
+      - login.
+      - account.
   condition: selection
 falsepositives:
   - Unknown

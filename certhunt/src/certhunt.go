@@ -210,6 +210,11 @@ func createAttributes(attributes chan MispAttribute) {
         writer.WriteString(string(jsonAttr) + "\n")
         writer.Flush()
 
+        // Publish message to redis
+        if err := rdb.Publish(ctx, "attributes", jsonAttr); err != nil {
+            log.Errorf("failed to publish message: %s", err)
+        }
+
         // Add to redis to avoid duplicate attributes
         if err := rdb.SetNX(ctx, redisKey, "", 90*24*time.Hour).Err(); err != nil {
             log.Errorf("failed to set redis key '%s': %s", redisKey, err)
