@@ -6,7 +6,7 @@ import (
     "strconv"
     "regexp"
 
-    sigma "github.com/markuskont/go-sigma-rule-engine"
+    sigma "github.com/DenizenB/go-sigma-rule-engine"
 )
 
 // Dynamic Event
