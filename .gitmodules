@@ -1,0 +1,3 @@
+[submodule "certhunt/go-sigma-rule-engine"]
+	path = certhunt/go-sigma-rule-engine
+	url = git@github.com:DenizenB/go-sigma-rule-engine.git
