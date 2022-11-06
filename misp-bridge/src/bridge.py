@@ -29,11 +29,11 @@ def main():
             continue
 
         try:
-            result = json.loads(message['data'].decode())
-            print("Received result\n", result)
+            attribute = json.loads(message['data'].decode())
+            print("Received attribute\n", attribute)
 
             # Add attribute to MISP
-            misp.add_attribute(**result)
+            misp.add_attribute(**attribute)
         except Exception as e:
             print(e)
 
