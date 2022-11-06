@@ -25,17 +25,20 @@ def main():
         if not message:
             continue
 
-        result = json.loads(message['data'].decode())
-        print("Received result\n", result)
+        try:
+            result = json.loads(message['data'].decode())
+            print("Received result\n", result)
 
-        # Add attribute to MISP
-        misp.add_attribute(
-            event_name   = result['event'],
-            event_tags   = result['event_tags'],
-            attr_type    = result['type'],
-            attr_value   = result['value'],
-            attr_comment = result['comment'],
-        )
+            # Add attribute to MISP
+            misp.add_attribute(
+                event_name   = result['event'],
+                event_tags   = result['event_tags'],
+                attr_type    = result['type'],
+                attr_value   = result['value'],
+                attr_comment = result['comment'],
+            )
+        except Exception as e:
+            print(e)
 
         # Backoff for 1 sec
         time.sleep(1)
