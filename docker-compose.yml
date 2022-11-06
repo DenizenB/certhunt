@@ -14,8 +14,6 @@ services:
         container_name: certhunt
         build: certhunt
         restart: unless-stopped
-        environment:
-          - GOMEMLIMIT=10MiB
         volumes:
           - ./data/certhunt/certhunt.log:/app/certhunt.log
           - ./data/certhunt/attributes.jsonl:/app/attributes.jsonl
