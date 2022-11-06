@@ -8,7 +8,8 @@ USER 405
 ENV HOME=/app
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt --disable-pip-version-check --no-warn-script-location
+RUN pip install -r requirements.txt --no-cache-dir --disable-pip-version-check --no-warn-script-location \
+    && rm requirements.txt
 
 COPY src/ .
 
