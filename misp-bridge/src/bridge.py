@@ -10,14 +10,17 @@ import redis
 # Project modules
 from misp_helper import MispHelper
 
+
 def main():
     misp = MispHelper.from_env()
     r = redis.Redis(host="redis", port=6379, db=1)
 
-    # Subscribe to redis attribute channel
-    print("Subscribing to 'attributes' channel...")
+    # Subscribe to redis channels
+    channels = ['certhunt:attributes']
+    print(f"Subscribing to: {channels}")
+
     channel = r.pubsub()
-    channel.subscribe("attributes")
+    channel.subscribe(*channels)
 
     while True:
         # Block until a message is received
@@ -30,13 +33,7 @@ def main():
             print("Received result\n", result)
 
             # Add attribute to MISP
-            misp.add_attribute(
-                event_name   = result['event'],
-                event_tags   = result['event_tags'],
-                attr_type    = result['type'],
-                attr_value   = result['value'],
-                attr_comment = result['comment'],
-            )
+            misp.add_attribute(**result)
         except Exception as e:
             print(e)
 

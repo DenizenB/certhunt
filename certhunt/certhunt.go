@@ -18,13 +18,18 @@ import (
 )
 
 type MispAttribute struct {
-    ParentEvent string `json:"parent_event"`
-    Event string `json:"event"`
+    ParentEventUuid string `json:"parent_event_uuid"`
+    EventName string `json:"event_name"`
     EventTags []string `json:"event_tags"`
-    Type string `json:"type"`
-    Value string `json:"value"`
-    Comment string `json:"comment"`
-    Certificate map[string]interface{} `json:"certificate"`
+    Type string `json:"attr_type"`
+    Value string `json:"attr_value"`
+    Comment string `json:"attr_comment"`
+}
+
+func (ma MispAttribute) fillDefaults() {
+    ma.Type = "domain"
+    // TODO set uuid of parent event
+    //ma.ParentEventUuid = ""
 }
 
 var log = logging.MustGetLogger("certhunt")
@@ -124,29 +129,26 @@ func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan
 
                 seenUnix, _ := jq.Float("seen")
                 seenDate := time.Unix(int64(seenUnix), 0).Format("2006-01-02")
-                registeredDomains, err := jq.ArrayOfStrings("leaf_cert", "registered_domains")
-                if err != nil {
-                    log.Error(err)
-                    continue
-                }
+                comment := fmt.Sprintf("Certificate issued: %s\nCertificate sha1: %s", seenDate, fingerprint)
 
-                if len(registeredDomains) == 0 {
-                    // No registered domain, no attribute
+                values, err := jq.ArrayOfStrings("leaf_cert", "registered_domains")
+                if err != nil || len(values) == 0 {
                     log.Error("Failed to resolve registered domains for certificate")
                     continue
                 }
 
-                attribute := MispAttribute{
-                    ParentEvent: "Certstream Sigma Rules",
-                    Event: result.Title,
-                    EventTags: result.Tags,
-                    Type: "domain",
-                    Value: registeredDomains[0],
-                    Comment: fmt.Sprintf("Certificate issued: %s\nCertificate sha1: %s", seenDate, fingerprint),
-                    Certificate: certData,
+                for _, value := range values {
+                    attribute := MispAttribute{
+                        EventName: result.Title,
+                        EventTags: result.Tags,
+                        Value: value,
+                        Comment: comment,
+                    }
+
+                    attribute.fillDefaults()
+                    attributes<- attribute
                 }
 
-                attributes<- attribute
             }
         }
     }
@@ -192,12 +194,12 @@ func createAttributes(attributes chan MispAttribute) {
 
     for {
         attribute := <-attributes
-        redisKey := "attr:" + attribute.Event + ":" + attribute.Value
+        redisKey := "attr:" + attribute.EventName + ":" + attribute.Value
 
         // Check if already added
         if rdb.Get(ctx, redisKey).Err() != redis.Nil {
             // Already added
-            log.Debugf("Attribute '%s' already added to MISP event '%s', skipping", attribute.Value, attribute.Event)
+            log.Debugf("Attribute '%s' already added to MISP event '%s', skipping", attribute.Value, attribute.EventName)
             continue
         }
 
@@ -211,7 +213,7 @@ func createAttributes(attributes chan MispAttribute) {
         writer.Flush()
 
         // Publish message to redis
-        if err := rdb.Publish(ctx, "attributes", jsonAttr); err != nil {
+        if err := rdb.Publish(ctx, "certhunt:attributes", jsonAttr); err != nil {
             log.Errorf("failed to publish message: %s", err)
         }
 
