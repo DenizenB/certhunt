@@ -30,7 +30,7 @@ def main():
 
         try:
             attribute = json.loads(message['data'].decode())
-            print("Received attribute\n", attribute)
+            print(f"Received attribute\n{attribute}")
 
             # Add attribute to MISP
             misp.add_attribute(**attribute)
