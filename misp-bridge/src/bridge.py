@@ -2,8 +2,7 @@
 
 # Standard library
 import json
-from functools import cache
-from os import environ as env
+import time
 
 # External libraries
 import redis
@@ -27,10 +26,19 @@ def main():
             continue
 
         result = json.loads(message['data'].decode())
-        print("Received result:", attribute)
+        print("Received result\n", result)
 
-        # Create attribute
-        misp.create_attribute()
+        # Add attribute to MISP
+        misp.add_attribute(
+            event_name   = result['event'],
+            event_tags   = result['event_tags'],
+            attr_type    = result['type'],
+            attr_value   = result['value'],
+            attr_comment = result['comment'],
+        )
+
+        # Backoff for 1 sec
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
