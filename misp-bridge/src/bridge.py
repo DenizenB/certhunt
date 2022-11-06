@@ -35,7 +35,7 @@ def main():
             # Add attribute to MISP
             misp.add_attribute(**attribute)
         except Exception as e:
-            print(e)
+            print(f"Caught exception while adding attribute: {e}")
 
         # Backoff for 1 sec
         time.sleep(1)
