@@ -26,10 +26,11 @@ type MispAttribute struct {
     Comment string `json:"attr_comment"`
 }
 
-func (ma MispAttribute) fillDefaults() {
+func (ma MispAttribute) fillDefaults() MispAttribute {
     ma.Type = "domain"
     // TODO set uuid of parent event
     //ma.ParentEventUuid = ""
+    return ma
 }
 
 var log = logging.MustGetLogger("certhunt")
@@ -143,9 +144,8 @@ func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan
                         EventTags: result.Tags,
                         Value: value,
                         Comment: comment,
-                    }
+                    }.fillDefaults()
 
-                    attribute.fillDefaults()
                     attributes<- attribute
                 }
 
@@ -213,7 +213,7 @@ func createAttributes(attributes chan MispAttribute) {
         writer.Flush()
 
         // Publish message to redis
-        if err := rdb.Publish(ctx, "certhunt:attributes", jsonAttr); err != nil {
+        if err := rdb.Publish(ctx, "certhunt:attributes", jsonAttr).Err(); err != nil {
             log.Errorf("failed to publish message: %s", err)
         }
 
