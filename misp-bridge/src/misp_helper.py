@@ -23,10 +23,15 @@ class MispHelper:
         attribute.value = attr_value
         attribute.comment = attr_comment
 
-        # Send to backend
+        # Add attribute to event
         result = self.misp.add_attribute(event, attribute)
         if 'errors' in result:
             raise Exception(f"Failed to add attribute: {result['errors']}")
+
+        # Publish event
+        result = self.misp.publish(event, alert=False)
+        if 'errors' in result:
+            raise Exception(f"Failed to publish event: {result['errors']}")
 
     @cache
     def _get_or_create_event(self, name: str, tags: tuple[str], parent_event_uuid: str = None) -> MISPEvent:
@@ -42,7 +47,7 @@ class MispHelper:
         if parent_event_uuid:
             event.extends_uuid = parent_event_uuid
 
-        # Send to backend
+        # Add event to MISP
         result = self.misp.add_event(event, metadata=True, pythonify=True)
         if 'errors' in result:
             raise Exception(f"Failed to create event: {result['errors']}")
