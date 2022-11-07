@@ -17,11 +17,8 @@ services:
         volumes:
           - ./data/certhunt/certhunt.log:/app/certhunt.log
           - ./data/certhunt/attributes.jsonl:/app/attributes.jsonl
-    redis:
-        image: redis:alpine
-        restart: unless-stopped
-        volumes:
-          - ./data/redis:/data
+        depends_on:
+          - redis
     mispbridge:
         build: misp-bridge
         restart: unless-stopped
@@ -29,6 +26,13 @@ services:
           - MISP_URL
           - MISP_KEY
           - MISP_VERIFYCERT
+        depends_on:
+          - redis
+    redis:
+        image: redis:alpine
+        restart: unless-stopped
+        volumes:
+          - ./data/redis:/data
 
     # Restart certhunt daily due to suspected memory leak
     restarter:
