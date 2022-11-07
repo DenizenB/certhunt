@@ -6,7 +6,8 @@ services:
         build: certhunt
         restart: unless-stopped
         environment:
-          - MISP_PARENT_EVENT_UUID
+          - CERTHUNT_PARENT_EVENT_UUID
+          - CERTHUNT_DEFAULT_EVENT_TAGS
         volumes:
           - ./data/certhunt/certhunt.log:/app/certhunt.log
           - ./data/certhunt/attributes.jsonl:/app/attributes.jsonl

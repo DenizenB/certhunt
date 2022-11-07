@@ -17,7 +17,8 @@ import (
     "github.com/go-redis/redis/v8"
 )
 
-var PARENT_EVENT_UUID = os.Getenv("MISP_PARENT_EVENT_UUID")
+var PARENT_EVENT_UUID = os.Getenv("CERTHUNT_PARENT_EVENT_UUID")
+var DEFAULT_EVENT_TAGS = strings.Split(os.Getenv("CERTHUNT_DEFAULT_EVENT_TAGS"), ",")
 var log = logging.MustGetLogger("certhunt")
 
 type MispAttribute struct {
@@ -126,12 +127,14 @@ func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan
 
                 fingerprint, _ := jq.String("leaf_cert", "fingerprint")
                 fingerprint = strings.ToLower(strings.ReplaceAll(fingerprint, ":", ""))
-                log.Infof("Match for \"%s\" (%s)", result.Title, fingerprint)
-
                 seenUnix, _ := jq.Float("seen")
                 seenDate := time.Unix(int64(seenUnix), 0).Format("2006-01-02")
-                comment := fmt.Sprintf("Certificate issued: %s\nDetails: https://crt.sh/?q=%s", seenDate, fingerprint)
 
+                log.Infof("Match for \"%s\" (%s)", result.Title, fingerprint)
+
+                eventName := result.Title
+                eventTags := append(DEFAULT_EVENT_TAGS, result.Tags...)
+                comment := fmt.Sprintf("Certificate issued: %s\nDetails: https://crt.sh/?q=%s", seenDate, fingerprint)
                 values, err := jq.ArrayOfStrings("leaf_cert", "registered_domains")
                 if err != nil || len(values) == 0 {
                     log.Error("Failed to resolve registered domains for certificate")
@@ -140,8 +143,8 @@ func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan
 
                 for _, value := range values {
                     attribute := MispAttribute{
-                        EventName: result.Title,
-                        EventTags: result.Tags,
+                        EventName: eventName,
+                        EventTags: eventTags,
                         Value: value,
                         Comment: comment,
                     }.fillDefaults()
