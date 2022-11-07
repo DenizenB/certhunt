@@ -5,6 +5,8 @@ services:
         container_name: certhunt
         build: certhunt
         restart: unless-stopped
+        environment:
+          - MISP_PARENT_EVENT_UUID
         volumes:
           - ./data/certhunt/certhunt.log:/app/certhunt.log
           - ./data/certhunt/attributes.jsonl:/app/attributes.jsonl
@@ -26,10 +28,10 @@ services:
           - ./data/redis:/data
 
     # Restart certhunt daily due to suspected memory leak
+    # https://gist.github.com/kizzx2/782b500a81ce46b889903b1f80353f21
     restarter:
         container_name: certhunt_restarter
         image: docker
         volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
         command: ["/bin/sh", "-c", "while true; do sleep 86400; docker restart certhunt; done"]
         restart: unless-stopped
-    # https://gist.github.com/kizzx2/782b500a81ce46b889903b1f80353f21

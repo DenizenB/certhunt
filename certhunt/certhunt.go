@@ -17,6 +17,9 @@ import (
     "github.com/go-redis/redis/v8"
 )
 
+var PARENT_EVENT_UUID = os.Getenv("MISP_PARENT_EVENT_UUID")
+var log = logging.MustGetLogger("certhunt")
+
 type MispAttribute struct {
     ParentEventUuid string `json:"parent_event_uuid"`
     EventName string `json:"event_name"`
@@ -28,12 +31,9 @@ type MispAttribute struct {
 
 func (ma MispAttribute) fillDefaults() MispAttribute {
     ma.Type = "domain"
-    // TODO set uuid of parent event
-    //ma.ParentEventUuid = ""
+    ma.ParentEventUuid = PARENT_EVENT_UUID
     return ma
 }
-
-var log = logging.MustGetLogger("certhunt")
 
 func streamCerts(certs chan<- map[string]interface{}) {
     printInterval := 10 * time.Second
