@@ -13,7 +13,7 @@ from misp_helper import MispHelper
 
 def main():
     misp = MispHelper.from_env()
-    r = redis.Redis(host="redis", port=6379, db=1)
+    r = redis.Redis(host="redis")
 
     # Subscribe to redis channels
     channels = ['certhunt:attributes']
