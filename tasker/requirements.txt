@@ -1,3 +1,0 @@
-redis
-tweepy>=4.4.0,<5.0
-shodan

@@ -1,15 +1,6 @@
 version: "2.2"
 
 services:
-    tasker:
-        build: tasker
-        restart: unless-stopped
-        environment:
-          - TWITTER_KEY
-          - TWITTER_SECRET
-          - URLSCAN_KEY
-        depends_on:
-          - redis
     certhunt:
         container_name: certhunt
         build: certhunt
