@@ -130,7 +130,7 @@ func matchCerts(worker int, certs <-chan map[string]interface{}, attributes chan
 
                 seenUnix, _ := jq.Float("seen")
                 seenDate := time.Unix(int64(seenUnix), 0).Format("2006-01-02")
-                comment := fmt.Sprintf("Certificate issued: %s\nCertificate sha1: %s", seenDate, fingerprint)
+                comment := fmt.Sprintf("Certificate issued: %s\nDetails: https://crt.sh/?q=%s", seenDate, fingerprint)
 
                 values, err := jq.ArrayOfStrings("leaf_cert", "registered_domains")
                 if err != nil || len(values) == 0 {
