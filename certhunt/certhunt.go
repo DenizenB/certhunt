@@ -182,7 +182,7 @@ func setupLogging() {
 func createAttributes(attributes chan MispAttribute) {
     // Connect to redis
     rdb := redis.NewClient(&redis.Options{
-        Addr: "redis",
+        Addr: "redis:6379",
     })
     ctx := context.Background()
 
